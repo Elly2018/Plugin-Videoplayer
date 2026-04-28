@@ -43,7 +43,7 @@ target_link_directories( ${PROJECT_NAME} PUBLIC
   "ffmpeg/lib"
 )
 
-file (STRINGS "Platform.txt" Platform)
+file (STRINGS "platform.txt" Platform)
 message("Target platform: ${Platform}")
 if( "${Platform}" STREQUAL "Windows" )
 # Windows config

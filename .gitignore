@@ -8,6 +8,9 @@ GDExtensionTemplate-build/
 UnityExtensionTemplate-build/
 UnrealExtensionTemplate-build/
 
+build_godot_linux_amd64/
+src/ffmpeg/
+
 # SConstruct
 .sconf_temp
 .sconsign.dblite
