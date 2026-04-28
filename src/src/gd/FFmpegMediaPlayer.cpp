@@ -12,9 +12,9 @@
 using namespace godot;
 
 void FFmpegMediaPlayer::_init_media() {
-	int* li = nullptr;
-	int count = 0;
-	int current = 0;
+	int32_t li = -1;
+	int32_t count = 0;
+	int32_t current = 0;
 	init_seek = false;
 	LOG("start init media");
 	video_playback = nativeIsVideoEnabled(id);

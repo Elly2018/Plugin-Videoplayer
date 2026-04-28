@@ -33,10 +33,10 @@ class FFmpegMediaPlayer : public Node {
 	GDCLASS(FFmpegMediaPlayer, Node);
 
 private:
-/**
-   The different stage for this video player,
-   each stage will change under behaviour of decoding processing
-*/
+	/**
+	 The different stage for this video player,
+	each stage will change under behaviour of decoding processing
+	*/
 	enum State {
 		/**
 		   This means the media does not initialize yet.

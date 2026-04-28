@@ -31,8 +31,8 @@ public:
 	void setVideoEnable(bool isEnable);
 	void setAudioEnable(bool isEnable);
 	void setAudioAllChDataEnable(bool isEnable);
-	double getVideoFrame(void** frameData, int& width, int& height);
-	double getAudioFrame(unsigned char** outputFrame, int& frameSize, int& nb_channel, size_t& byte_per_sample);
+	double getVideoFrame(void** frameData, int32_t&  width, int32_t&  height);
+	double getAudioFrame(unsigned char** outputFrame, int32_t&  frameSize, int32_t&  nb_channel, size_t& byte_per_sample);
 	double getNextVideoFrameTime();
 	double getNextAudioFrameTime();
 	void freeVideoFrame();
@@ -41,8 +41,8 @@ public:
 	void freeBufferFrame();
 	void print_stream_maps();
 
-	int getMetaData(char**& key, char**& value);
-	int getStreamCount();
+	int32_t getMetaData(char**& key, char**& value);
+	int32_t getStreamCount();
 	/**
 	 * 
 	 * Get the type from streams by index.
@@ -50,7 +50,7 @@ public:
 	 * @return -1: Fail, 0: Video, 1: Audio, 2: Data, 3: Subtitle
 	 * 
 	 */
-	int getStreamType(int index);
+	int32_t getStreamType(int32_t index);
 
 
 private:
@@ -75,26 +75,26 @@ private:
 	std::queue<AVFrame*> mVideoFrames;
 	std::queue<AVFrame*> mAudioFrames;
 	std::queue<AVFrame*> mSubtitleFrames;
-	unsigned int mVideoBuffMax;
-	unsigned int mAudioBuffMax;
-	unsigned int mSubtitleBuffMax;
+	uint32_t mVideoBuffMax;
+	uint32_t mAudioBuffMax;
+	uint32_t mSubtitleBuffMax;
 
 	std::queue<AVFrame*> mVideoFramesPreload;
 	std::queue<AVFrame*> mAudioFramesPreload;
 	std::queue<AVFrame*> mSubtitleFramesPreload;
-	unsigned int mVideoPreloadMax;
-	unsigned int mAudioPreloadMax;
-	unsigned int mSubtitlePreloadMax;
+	uint32_t mVideoPreloadMax;
+	uint32_t mAudioPreloadMax;
+	uint32_t mSubtitlePreloadMax;
 
 	SwrContext*	mSwrContext;
-	int initSwrContext();
+	int32_t initSwrContext();
 
 	VideoInfo	mVideoInfo;
 	AudioInfo	mAudioInfo;
 	SubtitleInfo	mSubtitleInfo;
 	void updateBufferState();
 
-	int mFrameBufferNum;
+	int32_t mFrameBufferNum;
 
 	bool isBuffBlocked();
 	bool isPreloadBlocked();
@@ -107,7 +107,7 @@ private:
 	void freeFrontFrame(std::queue<AVFrame*>* frameBuff, std::mutex* mutex);
 	void freeAllFrame(std::queue<AVFrame*>* frameBuff);
 	void flushBuffer(std::queue<AVFrame*>* frameBuff, std::mutex* mutex);
-	AVCodecContext* getStreamCodecContext(int index);
+	AVCodecContext* getStreamCodecContext(int32_t index);
 	void freeStreamCodecContext(AVCodecContext* codec);
 	void getListType(AVFormatContext* format, std::vector<int>& v, std::vector<int>& a, std::vector<int>& s);
 	std::mutex mPacketMutex;
@@ -117,5 +117,5 @@ private:
 
 	bool mIsSeekToAny;
 
-	void printErrorMsg(int errorCode);
+	void printErrorMsg(int32_t errorCode);
 };

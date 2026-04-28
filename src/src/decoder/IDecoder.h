@@ -12,7 +12,7 @@ public:
 	struct BaseInfo {
 		bool isEnabled;
 		int32_t currentIndex;
-		int* otherIndex;
+		int32_t* otherIndex;
 		int32_t otherIndexCount;
 		double lastTime;
 		double totalTime;

@@ -184,7 +184,7 @@ void nativeDestroyDecoder(int id) {
 	videoCtx->id = -1;
 }
 
-bool nativeGetOtherStreamIndex(int id, int type, int* li, int& count, int& current) {
+bool nativeGetOtherStreamIndex(int id, int type, int32_t& li, int& count, int& current) {
 	std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { return false; }
 

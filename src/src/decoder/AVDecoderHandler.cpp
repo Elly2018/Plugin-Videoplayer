@@ -114,7 +114,7 @@ double AVDecoderHandler::getNextAudioFrameTime() {
 	return mIDecoder->getNextAudioFrameTime();
 }
 
-bool AVDecoderHandler::getOtherIndex(MediaType type, int32_t* li, int32_t& count, int32_t& current)
+bool AVDecoderHandler::getOtherIndex(MediaType type, int32_t& li, int32_t& count, int32_t& current)
 {
 	switch (type)
 	{
@@ -124,7 +124,7 @@ bool AVDecoderHandler::getOtherIndex(MediaType type, int32_t* li, int32_t& count
 			count = info.otherIndexCount;
 			current = info.currentIndex;
 			//memcpy(li, info.otherIndex, count * sizeof(int));
-			li = info.otherIndex;
+			mempcpy(&li, info.otherIndex, sizeof(int32_t));
 		} return true;
 	case AVDecoderHandler::AUDIO:
 		{
@@ -132,7 +132,7 @@ bool AVDecoderHandler::getOtherIndex(MediaType type, int32_t* li, int32_t& count
 			count = info.otherIndexCount;
 			current = info.currentIndex;
 			//memcpy(li, info.otherIndex, count * sizeof(int));
-			li = info.otherIndex;
+			mempcpy(&li, info.otherIndex, sizeof(int32_t));
 		} return true;
 	case AVDecoderHandler::SUBTITLE:
 		{
@@ -140,7 +140,7 @@ bool AVDecoderHandler::getOtherIndex(MediaType type, int32_t* li, int32_t& count
 			count = info.otherIndexCount;
 			current = info.currentIndex;
 			//memcpy(li, info.otherIndex, count * sizeof(int));
-			li = info.otherIndex;
+			mempcpy(&li, info.otherIndex, sizeof(int32_t));
 		} return true;
 	}
 

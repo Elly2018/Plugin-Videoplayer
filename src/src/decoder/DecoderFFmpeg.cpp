@@ -867,12 +867,12 @@ void DecoderFFmpeg::freeStreamCodecContext(AVCodecContext* codec) {
 	}
 }
 
-void DecoderFFmpeg::getListType(AVFormatContext* format, std::vector<int>& v, std::vector<int>& a, std::vector<int>& s) {
+void DecoderFFmpeg::getListType(AVFormatContext* format, std::vector<int32_t>& v, std::vector<int32_t>& a, std::vector<int32_t>& s) {
 	v.clear();
 	a.clear();
 	s.clear();
-	for (int i = 0; i < format->nb_streams; i++) {
-		int type = getStreamType(i);
+	for (int32_t i = 0; i < format->nb_streams; i++) {
+		int32_t type = getStreamType(i);
 		if (type == AVMEDIA_TYPE_VIDEO) v.push_back(i);
 		else if (type == AVMEDIA_TYPE_AUDIO) a.push_back(i);
 		else if (type == AVMEDIA_TYPE_SUBTITLE) s.push_back(i);

@@ -35,7 +35,7 @@ public:
 	double getNextVideoFrameTime();
 	double getAudioFrame(uint8_t** outputFrame, int32_t& frameSize, int32_t& nb_channel, size_t& byte_per_sample);
 	double getNextAudioFrameTime();
-	bool getOtherIndex(MediaType type, int32_t* li, int32_t& count, int32_t& current);
+	bool getOtherIndex(MediaType type, int32_t& li, int32_t& count, int32_t& current);
 	void freeVideoFrame();
 	void freeAudioFrame();
 	void freeAllPreloadFrame();
