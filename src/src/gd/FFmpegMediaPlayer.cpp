@@ -144,7 +144,7 @@ void FFmpegMediaPlayer::play() {
 
 void FFmpegMediaPlayer::stop() {
 	if (state < State::DECODING) {
-		LOG("Stop failed, decoder state currently is: ", state);
+		LOG("Stop failed, decoder state currently is: ", (int32_t)state);
 		return;
 	}
 
