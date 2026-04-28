@@ -1,6 +1,7 @@
 # Objects.
 .scons-cache/
 *.os
+*.vs
 
 # Solutions
 NativeExtensionTemplate-build/

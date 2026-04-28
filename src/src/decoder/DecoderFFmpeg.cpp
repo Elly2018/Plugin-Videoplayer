@@ -428,7 +428,7 @@ double DecoderFFmpeg::getAudioFrame(unsigned char** outputFrame, int& frameSize,
 	}
 
 	AVFrame* frame = mAudioFrames.front();
-	nb_channel = frame->channels;
+	nb_channel = frame->ch_layout.nb_channels;
 	frameSize = frame->nb_samples;
 	*outputFrame = frame->data[0];
 	byte_per_sample = (size_t)av_get_bytes_per_sample(mAudioCodecContext->sample_fmt);
@@ -730,7 +730,7 @@ void DecoderFFmpeg::updateAudioFrame() {
 	AVFrame* frame = av_frame_alloc();	
 
 	frame->sample_rate = srcFrame->sample_rate;
-	frame->channel_layout = av_get_default_channel_layout(mAudioInfo.channels);
+	av_channel_layout_default(&frame->ch_layout, mAudioInfo.channels);
 	frame->format = AV_SAMPLE_FMT_FLT;	//	For Unity format.
 	frame->best_effort_timestamp = srcFrame->best_effort_timestamp;
 	frame->pts = srcFrame->best_effort_timestamp;
