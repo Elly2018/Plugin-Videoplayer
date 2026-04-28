@@ -23,12 +23,11 @@ Linux-AMD64 = {
 "lib/Linux-AMD64/libavformat.so":".",
 "lib/Linux-AMD64/libavutil.so":".",
 "lib/Linux-AMD64/libswresample.so":".",
-"lib/Linux-AMD64/libswscale.so":".",
-"lib/Linux-AMD64/liblibyuv.so
+"lib/Linux-AMD64/libswscale.so":"."
 }
 
 [libraries]
 
 windows.x86_64 = "lib/Windows-AMD64/gd_videoplayer-d.dll"
-linux.x86_64 = "lib/Linux-AMD64/gd_videoplayer-d.dll"
+linux.x86_64 = "lib/Linux-AMD64/libgd_videoplayer-d.so"
 
