@@ -47,7 +47,7 @@ void FFmpegMediaPlayer::_init_media() {
 
 	clock = nativeGetClock(id);
 	LOG("Current clock: ", clock);
-	state = INITIALIZED;
+	state = State::INITIALIZED;
 	LOG("start change to INITIALIZED");
 }
 
@@ -99,7 +99,7 @@ bool FFmpegMediaPlayer::load_path(String _path) {
 	} else {
 		LOG("nativeGetDecoderState is false");
 		LOG("State change to UNINITIALIZED");
-		state = UNINITIALIZED;
+		state = State::UNINITIALIZED;
 	}
 
 	return is_loaded;
@@ -117,13 +117,13 @@ void FFmpegMediaPlayer::load_path_async(String _path) {
 	const char *cstr = utf8.get_data();
 
 	LOG("State change to LOADING");
-	state = LOADING;
+	state = State::LOADING;
 
 	nativeCreateDecoderAsync(cstr, id);
 }
 
 void FFmpegMediaPlayer::play() {
-	if (state != INITIALIZED) {
+	if (state != State::INITIALIZED) {
 		LOG("play func failed, because state is not INITIALIZED");
 		return;
 	}
@@ -138,7 +138,7 @@ void FFmpegMediaPlayer::play() {
 	global_start_time = Time::get_singleton()->get_unix_time_from_system();
 
 	LOG("start change to Decoding");
-	state = DECODING;
+	state = State::DECODING;
 	audio_init();
 }
 
@@ -164,11 +164,11 @@ void FFmpegMediaPlayer::stop() {
 
 
 	LOG("start change to INITIALIZED");
-	state = INITIALIZED;
+	state = State::INITIALIZED;
 }
 
 bool FFmpegMediaPlayer::is_playing() const {
-	return !paused && state == DECODING;
+	return !paused && state == State::DECODING;
 }
 
 void FFmpegMediaPlayer::set_paused(bool p_paused) {
@@ -203,7 +203,7 @@ float FFmpegMediaPlayer::get_playback_position() const {
 }
 
 void FFmpegMediaPlayer::seek(float p_time) {
-	if (state != DECODING && state != END_OF_FILE) {
+	if (state != State::DECODING && state != State::END_OF_FILE) {
 		return;
 	}
 
@@ -220,39 +220,39 @@ void FFmpegMediaPlayer::seek(float p_time) {
 
 	audioFrame.clear();
 
-	state = SEEK;
+	state = State::SEEK;
 }
 
 void FFmpegMediaPlayer::_process(float delta) {
 	switch (state) {
-		case LOADING: {
+		case State::LOADING: {
 			if (nativeGetDecoderState(id) == 1) {
 				_init_media();
 				play();
 				LOG("Loading successful");
 			} else if (nativeGetDecoderState(id) == -1) {
-				state = UNINITIALIZED;
+				state = State::UNINITIALIZED;
 				LOG_ERROR("Main loop, async loading failed, nativeGetDecoderState == -1");
 				LOG_ERROR("Init failed");
 			}
 		} break;
 
-		case BUFFERING: {
+		case State::BUFFERING: {
 			if (nativeIsVideoBufferFull(id) || nativeIsEOF(id)) {
 				global_start_time = Time::get_singleton()->get_unix_time_from_system() - hang_time;
-				state = DECODING;
+				state = State::DECODING;
 				audioFrame.clear();
 			}
 		} break;
 
-		case SEEK: {
+		case State::SEEK: {
 			if (nativeIsSeekOver(id)) {
 				global_start_time = Time::get_singleton()->get_unix_time_from_system() - hang_time;
-				state = DECODING;
+				state = State::DECODING;
 			}
 		} break;
 
-		case DECODING: {
+		case State::DECODING: {
 			if (paused) {
 				return;
 			}
@@ -287,7 +287,7 @@ void FFmpegMediaPlayer::_process(float delta) {
 							nativeSetVideoTime(id, video_current_time);
 						}
 						else {
-							state = END_OF_FILE;
+							state = State::END_OF_FILE;
 						}
 					}
 				}
@@ -295,13 +295,13 @@ void FFmpegMediaPlayer::_process(float delta) {
 
 			if (nativeIsVideoBufferEmpty(id) && !nativeIsEOF(id) && first_frame_a && first_frame_v) {
 				hang_time = Time::get_singleton()->get_unix_time_from_system() - global_start_time;
-				state = BUFFERING;
+				state = State::BUFFERING;
 			}
 		} break;
 
-		case END_OF_FILE: {
+		case State::END_OF_FILE: {
 			if (looping) {
-				state = DECODING;
+				state = State::DECODING;
 				seek(0.0f);
 			}
 		} break;
@@ -318,7 +318,7 @@ void FFmpegMediaPlayer::_physics_process(float delta) {
 	else {
 		return;
 	}
-	bool state_check = (state == DECODING || state == BUFFERING) && audioFrame.size() < 1024;
+	bool state_check = (state == State::DECODING || state == State::BUFFERING) && audioFrame.size() < 1024;
 	if (state_check) {
 		// TODO: Implement audio.
 		unsigned char* raw_audio_data = nullptr;
@@ -371,7 +371,7 @@ void FFmpegMediaPlayer::_physics_process(float delta) {
 		}
 	}
 	if (playback.is_valid()) {
-		while (c > 0 && audioFrame.size() > 0 && !first_frame_v && state == DECODING) {
+		while (c > 0 && audioFrame.size() > 0 && !first_frame_v && state == State::DECODING) {
 			if (audioFrame.size() > 0) {
 				Vector2 element = audioFrame.front()->get();
 				playback->push_frame(element);

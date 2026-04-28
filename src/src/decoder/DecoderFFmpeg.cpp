@@ -526,12 +526,20 @@ int DecoderFFmpeg::getStreamType(int index)
 
 void DecoderFFmpeg::destroy() {
 	if (mVideoCodecContext != nullptr) {
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(61, 0, 0)
 		avcodec_close(mVideoCodecContext);
+#else
+		avcodec_free_context(&mVideoCodecContext);
+#endif
 		mVideoCodecContext = nullptr;
 	}
 	
 	if (mAudioCodecContext != nullptr) {
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(61, 0, 0)
 		avcodec_close(mAudioCodecContext);
+#else
+		avcodec_free_context(&mAudioCodecContext);
+#endif
 		mAudioCodecContext = nullptr;
 	}
 	
@@ -666,7 +674,7 @@ void DecoderFFmpeg::updateVideoFrame() {
 	AVFrame* srcFrame = mVideoFramesPreload.front();
 	mVideoFramesPreload.pop();
 
-	clock_t start = clock();
+	//clock_t start = clock();
 
 	int width = srcFrame->width;
 	int height = srcFrame->height;
@@ -726,7 +734,7 @@ void DecoderFFmpeg::updateAudioFrame() {
 	if (mAudioFramesPreload.size() <= 0) return;
 	AVFrame* srcFrame = mAudioFramesPreload.front();
 	mAudioFramesPreload.pop();
-	clock_t start = clock();
+	//clock_t start = clock();
 	AVFrame* frame = av_frame_alloc();	
 
 	frame->sample_rate = srcFrame->sample_rate;
