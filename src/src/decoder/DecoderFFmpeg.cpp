@@ -820,7 +820,7 @@ void DecoderFFmpeg::print_stream_maps()
 	}
 	LOG("  Audio info: ");
 	if (mAudioCodecContext != nullptr) {
-		LOG("    Channel_count: ", mAudioCodecContext->channels);
+		LOG("    Channel_count: ", mAudioCodecContext->ch_layout.nb_channels);
 		LOG("    Bitrate: ", mAudioCodecContext->bit_rate);
 		LOG("    Codec_id: ", mAudioCodec->id);
 	}
@@ -864,9 +864,9 @@ void DecoderFFmpeg::flushBuffer(std::queue<AVFrame*>* frameBuff, std::mutex* mut
 	}
 }
 
-AVCodecContext* DecoderFFmpeg::getStreamCodecContext(int index)
+AVCodecContext* DecoderFFmpeg::getStreamCodecContext(int32_t index)
 {
-	if (index < 0 || index > mAVFormatContext->nb_streams) {
+	if (index < 0 || index > (int32_t)mAVFormatContext->nb_streams) {
 		LOG_ERROR("Index out of range: getStreamsCodecContext");
 		return nullptr;
 	}
@@ -878,7 +878,11 @@ AVCodecContext* DecoderFFmpeg::getStreamCodecContext(int index)
 void DecoderFFmpeg::freeStreamCodecContext(AVCodecContext* codec) {
 	if (codec != nullptr)
 	{
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(61, 0, 0)
 		avcodec_close(codec);
+#else
+		avcodec_free_context(&codec);
+#endif
 	}
 }
 

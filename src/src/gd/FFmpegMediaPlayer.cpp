@@ -225,6 +225,9 @@ void FFmpegMediaPlayer::seek(float p_time) {
 
 void FFmpegMediaPlayer::_process(float delta) {
 	switch (state) {
+		default:
+			break;
+
 		case State::LOADING: {
 			if (nativeGetDecoderState(id) == 1) {
 				_init_media();
@@ -260,7 +263,7 @@ void FFmpegMediaPlayer::_process(float delta) {
 			if (video_playback) {
 				void *frame_data = nullptr;
 				bool frame_ready = false;
-				double frameTime = nativeGrabVideoFrame(id, &frame_data, frame_ready, width, height);
+				//double frameTime = nativeGrabVideoFrame(id, &frame_data, frame_ready, width, height);
 				if (frame_ready) {
 					data_size = width * height * 3;
 					PackedByteArray image_data;

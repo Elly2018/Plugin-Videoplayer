@@ -42,33 +42,33 @@ endif()
 
 # Main project information
 if( "${Engine}" STREQUAL "Godot" )
-project( GDExtensionTemplate
-    LANGUAGES
-        CXX
-    VERSION
-        0.1.0
-)
+    project( GDExtensionTemplate
+        LANGUAGES
+            CXX
+        VERSION
+            0.1.0
+    )
 elseif( "${Engine}" STREQUAL "Unity" )
-project( UnityExtensionTemplate
-    LANGUAGES
-        CXX
-    VERSION
-        0.1.0
-)
+    project( UnityExtensionTemplate
+        LANGUAGES
+            CXX
+        VERSION
+            0.1.0
+    )
 elseif( "${Engine}" STREQUAL "Unreal" )
-project( UnrealExtensionTemplate
-    LANGUAGES
-        CXX
-    VERSION
-        0.1.0
-)
+    project( UnrealExtensionTemplate
+        LANGUAGES
+            CXX
+        VERSION
+            0.1.0
+    )
 elseif( "${Engine}" STREQUAL "Native" )
-project( NativeExtensionTemplate
-    LANGUAGES
-        CXX
-    VERSION
-        0.1.0
-)
+    project( NativeExtensionTemplate
+        LANGUAGES
+            CXX
+        VERSION
+            0.1.0
+    )
 endif()
 
 # Create our library
@@ -107,7 +107,7 @@ if( NOT DEFINED CMAKE_DEBUG_POSTFIX )
 endif()
 
 # Warnings
-include( CompilerWarnings )
+# include( CompilerWarnings )
 
 # Create and include version info file from git
 include( GitVersionInfo )

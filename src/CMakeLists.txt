@@ -11,6 +11,9 @@ file(GLOB_RECURSE UnityNativeSRC unity-native/PluginSource/source/*.hpp unity-na
 file(GLOB_RECURSE UnrealSRC src/unreal/*.hpp src/unreal/*.h src/unreal/*.cpp src/unreal/*.c)
 file(GLOB_RECURSE NativeSRC src/Logger.h)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+add_compile_options(-Werror)
+
 if( "${Engine}" STREQUAL "Godot" )
 	list(APPEND SRC "${CORESRC}" "${GDSRC}")
 	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "gd_videoplayer")
@@ -39,7 +42,7 @@ target_sources( ${PROJECT_NAME}
 )
 
 target_link_directories( ${PROJECT_NAME} PUBLIC
-  "ffmpeg/lib"
+	"ffmpeg/lib"
 )
 
 file (STRINGS "platform.txt" Platform)
