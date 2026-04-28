@@ -1,16 +1,16 @@
 #pragma once
-/*
-  Godot engine dependent logic,
-  
-  Video part:
-    This will generate a reuseable texture and emit event to it,
-    User should register the signal in GDScript and apply to the material user want.
-  
-  Audio part:
-    it needs a AudioStreamPlayer with AudioStreamGenerator attach to it,
-    That will be the main audio output component.
-  
-*/
+/// 
+/// Godot engine dependent logic,
+/// 
+/// Video part:
+///   This will generate a reuseable texture and emit event to it,
+///   User should register the signal in GDScript and apply to the material user want.
+/// 
+/// Audio part:
+///   it needs a AudioStreamPlayer with AudioStreamGenerator attach to it,
+///   That will be the main audio output component.
+/// 
+/// 
 #include <string>
 
 #include <godot_cpp/classes/audio_stream_playback.hpp>
@@ -26,22 +26,22 @@
 using namespace godot;
 
 
-/**
-   The control node for godot video player
-*/
+/// 
+/// The control node for godot video player
+/// 
 class FFmpegMediaPlayer : public Node {
 	GDCLASS(FFmpegMediaPlayer, Node);
 
-private:
-	/**
-	 The different stage for this video player,
-	each stage will change under behaviour of decoding processing
-	*/
-	enum State {
-		/**
-		   This means the media does not initialize yet.
-		   It will trying to get the information it needs in order to start the decoding process.
-		*/
+public:
+	///
+	/// The different stage for this video player
+	/// each stage will change under behaviour of decoding processing
+	///
+	enum class State {
+		/// 
+		/// This means the media does not initialize yet.
+		/// It will trying to get the information it needs in order to start the decoding process.
+		/// 
 		FAILED = -1,
 		LOADING,
 		UNINITIALIZED,
@@ -52,179 +52,102 @@ private:
 		END_OF_FILE,
 	};
 
-	/*
-	  The audio player component in the scene,
-	  User should call set_player(instance) to register the player.
-	*/
-	AudioStreamPlayer* player;
-	/*
-	  The Custom PCM data generator
-	*/
-	Ref<AudioStreamGenerator> generator;
-	/*
-	  Here is where we spit audio data to
-	*/
-	Ref<AudioStreamGeneratorPlayback> playback;
-
-	/*
-	  The texture we're sending to GDscript, user should take this resource and apply to the material it want
-	*/
-	Ref<ImageTexture> texture;
-	/*
-	  The raw image data, video player will write the bytes data to it
-	*/
-	Ref<Image> image;
-	/*
-	  User select path
-	*/
-	String path;
-	/*
-	  User select format (decklink support ?)
-	*/
-	String format;
-
-	/*
-	  Decoder id
-	*/
-	int id = 0;
-	/*
-	  Current state
-	*/
-	int state = UNINITIALIZED;
-
-	bool first_frame_v = true;
-	bool first_frame_a = true;
-	bool paused = false;
-	bool looping = false;
-
-	bool video_playback = false;
-	int width = 0;
-	int height = 0;
-	float framerate = 0.0f;
-	float video_length = 0.0f;
-	Vector2 lastSubmitAudioFrame;
-	List<Vector2> audioFrame;
-	double video_current_time = 0.0f;
-	int data_size = 0;
-	
-	bool init_seek = false;
-	bool audio_playback = false;
-	int channels = 0;
-	int sampleRate = 0;
-	float audio_length = 0.0f;
-	double audio_current_time = 0.0f;
-
-	double global_start_time = 0.0f;
-	double hang_time = 0.0f;
-	int clock = -1;
-
-	void _init_media();
-	/*
-	  User should call this method in _ready func in the gdscript
-	  To fill the buffer of audio stream (audio stream generator)
-	*/
-	void audio_init();
-
-protected:
-	void _notification(int p_what);
-	static void _bind_methods();
-
-public:
-	/*
-	  Loading path from local variable
-	*/
+	FFmpegMediaPlayer();
+	virtual ~FFmpegMediaPlayer();
+	/// 
+	/// Loading path from local variable
+	/// 
 	void load();
-	/*
-	  Async loading path from local variable
-	  "async_loaded" signal will trigger when finish
-	*/
+	/// 
+	/// Async loading path from local variable
+	/// "async_loaded" signal will trigger when finish
+	/// 
 	void load_async();
-	/*
-	  Loading path from string
-	*/
+	/// 
+	/// Loading path from string
+	/// 
 	bool load_path(String _path);
-	/*
-	  Async loading path from string
-	  "async_loaded" signal will trigger when finish
-	*/
+	/// 
+	/// Async loading path from string
+	/// "async_loaded" signal will trigger when finish
+	/// 
 	void load_path_async(String _path);
 
 
-	/*
-	  Stop the player, this will destroy decoder object in the low level
-	  And reset every variable
-	*/
+	/// 
+	/// Stop the player, this will destroy decoder object in the low level
+	/// And reset every variable
+	/// 
 	void stop();
-	/*
-	  This method should called after media is loaded
-	  Otherwise this will do nothing
-	*/
+	/// 
+	/// This method should called after media is loaded
+	/// Otherwise this will do nothing
+	/// 
 	void play();
-	/*
-	  Check current state is playing media
-	*/
+	/// 
+	/// Check current state is playing media
+	/// 
 	bool is_playing() const;
 
 
-	/*
-	  Pause decoder
-	*/
+	/// 
+	/// Pause decoder
+	/// 
 	void set_paused(bool p_paused);
-	/*
-	  Check pause state
-	*/
+	/// 
+	/// Check pause state
+	/// 
 	bool is_paused() const;
 
 
-	/*
-	* Set the loop trigger
-	  Set the loop trigger
-	  Looping will decide if end of file will causing seek to start
-	*/
+	/// 
+	/// Set the loop trigger
+	/// Looping will decide if end of file will causing seek to start
+	/// 
 	void set_loop(bool p_enable);
-	/*
-	  Check loop state
-	*/
+	/// 
+	/// Check loop state
+	/// 
 	bool has_loop() const;
-	/*
-	  Get the media length (second)
-	*/
+	/// 
+	/// Get the media length (second)
+	/// 
 	float get_length() const;
-	/*
-	  Get current play position (second)
-	*/
+	///
+	///Get current play position (second)
+	///
 	float get_playback_position() const;
-	/*
-	  Seeking to particular position within the loaded media
-	*/
+	/// 
+	/// Seeking to particular position within the loaded media
+	/// 
 	void seek(float p_time);
 
 
-	/*
-	  Godot update method
-	  This will trying to update the video part
-	  And handle some stage of player events
-	*/
+	/// 
+	/// Godot update method
+	/// This will trying to update the video part
+	/// And handle some stage of player events
+	/// 
 	void _process(float delta);
-	/*
-	  Godot fixed update method
-	  This will trying to update the audio part
-	*/
- 	void _physics_process(float delta);
+	/// 
+	/// Godot fixed update method
+	/// This will trying to update the audio part
+	/// 
+	void _physics_process(float delta);
 
 
-	/*
-	  Set the audio player instance to it
-	  This instance will become the primary source of audio player for it
-	*/
+	/// 
+	/// Set the audio player instance to it
+	/// This instance will become the primary source of audio player for it
+	/// 
 	void set_player(AudioStreamPlayer* _player);
-	/*
-	  Get current use audio player
-	*/
+	/// 
+	/// Get current use audio player
+	/// 
 	AudioStreamPlayer* get_player() const;
 
-	void set_sample_rate(const int rate);
-	int get_sample_rate() const;
+	void set_sample_rate(const int32_t rate);
+	int32_t get_sample_rate() const;
 	void set_buffer_length(const double second);
 	double get_buffer_length() const;
 	void set_path(const String _path);
@@ -232,6 +155,81 @@ public:
 	void set_format(const String _format);
 	String get_format() const;
 
-	FFmpegMediaPlayer();
-	~FFmpegMediaPlayer();
+protected:
+	void _notification(int32_t p_what);
+	static void _bind_methods();
+
+private:
+	void _init_media();
+	/// 
+	/// User should call this method in _ready func in the gdscript
+	/// To fill the buffer of audio stream (audio stream generator)
+	/// 
+	void audio_init();
+
+	/// 
+	/// The audio player component in the scene,
+	/// User should call set_player(instance) to register the player.
+	/// 
+	AudioStreamPlayer* player;
+	/// 
+	/// The Custom PCM data generator
+	/// 
+	Ref<AudioStreamGenerator> generator;
+	/// 
+	/// Here is where we spit audio data to
+	/// 
+	Ref<AudioStreamGeneratorPlayback> playback;
+
+	/// 
+	/// The texture we're sending to GDscript, user should take this resource and apply to the material it want
+	/// 
+	Ref<ImageTexture> texture;
+	/// 
+	/// The raw image data, video player will write the bytes data to it
+	/// 
+	Ref<Image> image;
+	/// 
+	/// User select path
+	/// 
+	String path;
+	/// 
+	/// User select format (decklink support ?)
+	/// 
+	String format;
+
+	/// 
+	/// Decoder id
+	/// 
+	int32_t id = 0;
+	/// 
+	/// Current state
+	/// 
+	State state = State::UNINITIALIZED;
+
+	bool first_frame_v = true;
+	bool first_frame_a = true;
+	bool paused = false;
+	bool looping = false;
+
+	bool video_playback = false;
+	int32_t width = 0;
+	int32_t height = 0;
+	float framerate = 0.0f;
+	float video_length = 0.0f;
+	Vector2 lastSubmitAudioFrame;
+	List<Vector2> audioFrame;
+	double video_current_time = 0.0f;
+	int32_t data_size = 0;
+	
+	bool init_seek = false;
+	bool audio_playback = false;
+	int32_t channels = 0;
+	int32_t sampleRate = 0;
+	float audio_length = 0.0f;
+	double audio_current_time = 0.0f;
+
+	double global_start_time = 0.0f;
+	double hang_time = 0.0f;
+	int32_t clock = -1;
 };
