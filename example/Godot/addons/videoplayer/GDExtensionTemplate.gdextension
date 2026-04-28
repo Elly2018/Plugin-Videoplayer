@@ -17,15 +17,14 @@ windows.x86_64 = {
 "lib/Windows-AMD64/libyuv.dll":"."
 }
 Linux-AMD64 = {
-"lib/Linux-AMD64/avcodec-60.dll":".",
-"lib/Linux-AMD64/avdevice-60.dll":".",
-"lib/Linux-AMD64/avfilter-9.dll":".",
-"lib/Linux-AMD64/avformat-60.dll":".",
-"lib/Linux-AMD64/avutil-58.dll":".",
-"lib/Linux-AMD64/postproc-57.dll":".",
-"lib/Linux-AMD64/swresample-4.dll":".",
-"lib/Linux-AMD64/swscale-7.dll":".",
-"lib/Linux-AMD64/libyuv.dll":"."
+"lib/Linux-AMD64/libavcodec.so":".",
+"lib/Linux-AMD64/libavdevice.so":".",
+"lib/Linux-AMD64/libavfilter.so":".",
+"lib/Linux-AMD64/libavformat.so":".",
+"lib/Linux-AMD64/libavutil.so":".",
+"lib/Linux-AMD64/libswresample.so":".",
+"lib/Linux-AMD64/libswscale.so":".",
+"lib/Linux-AMD64/liblibyuv.so
 }
 
 [libraries]
