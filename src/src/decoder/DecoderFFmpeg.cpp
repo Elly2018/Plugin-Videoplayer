@@ -1,14 +1,14 @@
-#include "gd/Logger.h"
 #include "DecoderFFmpeg.h"
-#include "DecodeConfig.h"
 #include <fstream>
 #include <string>
 #include <thread>
 #include <future>
+#include "../DecodeConfig.h"
+#include "../gd/Logger.h"
 
 extern "C" {
-#include <libavutil/imgutils.h>
-#include <libavutil/hwcontext.h>
+	#include <libavutil/imgutils.h>
+	#include <libavutil/hwcontext.h>
 }
 
 #ifdef UNITY

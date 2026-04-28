@@ -1,15 +1,15 @@
 ﻿/*
 * Interface for the low level decoder control
 */
-#include <interface/MediaDecoderUtility.h>
-#include <decoder/AVDecoderHandler.h>
-#include <gd/Logger.h>
+#include "MediaDecoderUtility.h"
 #include <stdio.h>
 #include <string>
 #include <memory>
 #include <thread>
 #include <list>
 #include <cstring>
+#include "../gd/Logger.h"
+#include "../decoder/AVDecoderHandler.h"
 
 #ifndef WIN32
 #define strcpy_s(src, size, dest) (strncpy((dest), (src), (size)))

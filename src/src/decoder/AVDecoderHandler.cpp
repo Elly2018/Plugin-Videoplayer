@@ -1,7 +1,6 @@
 #include "AVDecoderHandler.h"
 #include "DecoderFFmpeg.h"
-#include <gd/Logger.h>
-#include <Windows.h>
+#include "../gd/Logger.h"
 
 AVDecoderHandler::AVDecoderHandler() {
 	mDecoderState = UNINITIALIZED;
@@ -53,7 +52,7 @@ bool AVDecoderHandler::isPreloadRunning() const {
 	return mBufferThreadRunning;
 }
 
-double AVDecoderHandler::getVideoFrame(void** frameData, int& width, int& height) {
+double AVDecoderHandler::getVideoFrame(void** frameData, int32_t& width, int32_t& height) {
 	bool decoder_null = mIDecoder == nullptr;
 	bool decoder_disable = !mIDecoder->getVideoInfo().isEnabled;
 	bool decoder_seek = mDecoderState == SEEK;
@@ -84,7 +83,7 @@ double AVDecoderHandler::getNextVideoFrameTime() {
 	return mIDecoder->getNextVideoFrameTime();
 }
 
-double AVDecoderHandler::getAudioFrame(uint8_t** outputFrame, int& frameSize, int& nb_channel, size_t& byte_per_sample) {
+double AVDecoderHandler::getAudioFrame(uint8_t** outputFrame, int32_t& frameSize, int32_t& nb_channel, size_t& byte_per_sample) {
 	bool decoder_null = mIDecoder == nullptr;
 	bool decoder_disable = !mIDecoder->getAudioInfo().isEnabled;
 	bool decoder_seek = mDecoderState == SEEK;
@@ -115,7 +114,7 @@ double AVDecoderHandler::getNextAudioFrameTime() {
 	return mIDecoder->getNextAudioFrameTime();
 }
 
-bool AVDecoderHandler::getOtherIndex(MediaType type, int* li, int& count, int& current)
+bool AVDecoderHandler::getOtherIndex(MediaType type, int32_t* li, int32_t& count, int32_t& current)
 {
 	switch (type)
 	{

@@ -17,24 +17,24 @@ using namespace godot;
 		#define LOG(...) godot::UtilityFunctions::print( __VA_ARGS__ )
 		#define LOG_ERROR(...) godot::UtilityFunctions::printerr( __VA_ARGS__ )
 	#else
-		#define LOG
-		#define LOG_ERROR
+		#define LOG(...)
+		#define LOG_ERROR(...)
 	#endif
 #ifdef ENABLE_LOG_VERBOSE
 	#ifdef GODOT
 		#define LOG_VERBOSE(...) godot::UtilityFunctions::print( __VA_ARGS__ )
 		#define LOG_ERROR_VERBOSE(...) godot::UtilityFunctions::printerr( __VA_ARGS__ )
 	#else
-		#define LOG_VERBOSE
-		#define LOG_ERROR_VERBOSE
+		#define LOG_VERBOSE(...)
+		#define LOG_ERROR_VERBOSE(...)
 	#endif
 #else
-	#define LOG_VERBOSE
-	#define LOG_ERROR_VERBOSE
+	#define LOG_VERBOSE(...)
+	#define LOG_ERROR_VERBOSE(...)
 #endif
 #else
-	#define LOG
-	#define LOG_ERROR
-	#define LOG_VERBOSE
-	#define LOG_ERROR_VERBOSE
+	#define LOG(...)
+	#define LOG_ERROR(...)
+	#define LOG_VERBOSE(...)
+	#define LOG_ERROR_VERBOSE(...)
 #endif

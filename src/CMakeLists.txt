@@ -11,8 +11,6 @@ file(GLOB_RECURSE UnityNativeSRC unity-native/PluginSource/source/*.hpp unity-na
 file(GLOB_RECURSE UnrealSRC src/unreal/*.hpp src/unreal/*.h src/unreal/*.cpp src/unreal/*.c)
 file(GLOB_RECURSE NativeSRC src/Logger.h)
 
-target_include_directories( ${PROJECT_NAME} PRIVATE "src")
-
 if( "${Engine}" STREQUAL "Godot" )
 	list(APPEND SRC "${CORESRC}" "${GDSRC}")
 	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "gd_videoplayer")
@@ -29,10 +27,11 @@ else()
 	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "native_videoplayer")
 endif()
 
-target_compile_options(${PROJECT_NAME} PRIVATE "/WX-")
-
-set_property(TARGET ${PROJECT_NAME} PROPERTY
-             MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:DLL>")
+if(WIN32)
+	target_compile_options(${PROJECT_NAME} PRIVATE "/WX-")
+	set_property(TARGET ${PROJECT_NAME} PROPERTY
+				MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:DLL>")
+endif()
 
 target_sources( ${PROJECT_NAME}
     PRIVATE
@@ -58,14 +57,14 @@ if( "${Platform}" STREQUAL "Windows" )
 else()
 	# MacOS or Linux config
 	set(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
-	target_link_libraries(${PROJECT_NAME} PRIVATE libavcodec.dll.a)
-	target_link_libraries(${PROJECT_NAME} PRIVATE libavdevice.dll.a)
-	target_link_libraries(${PROJECT_NAME} PRIVATE libavfilter.dll.a)
-	target_link_libraries(${PROJECT_NAME} PRIVATE libavformat.dll.a)
-	target_link_libraries(${PROJECT_NAME} PRIVATE libavutil.dll.a)
-	target_link_libraries(${PROJECT_NAME} PRIVATE libpostproc.dll.a)
-	target_link_libraries(${PROJECT_NAME} PRIVATE libswresample.dll.a)
-	target_link_libraries(${PROJECT_NAME} PRIVATE libswscale.dll.a)
+	target_link_libraries(${PROJECT_NAME} PRIVATE libavcodec.so)
+	target_link_libraries(${PROJECT_NAME} PRIVATE libavdevice.so)
+	target_link_libraries(${PROJECT_NAME} PRIVATE libavfilter.so)
+	target_link_libraries(${PROJECT_NAME} PRIVATE libavformat.so)
+	target_link_libraries(${PROJECT_NAME} PRIVATE libavutil.so)
+	target_link_libraries(${PROJECT_NAME} PRIVATE libpostproc.so)
+	target_link_libraries(${PROJECT_NAME} PRIVATE libswresample.so)
+	target_link_libraries(${PROJECT_NAME} PRIVATE libswscale.so)
 endif()
 
 target_include_directories( ${PROJECT_NAME} PUBLIC "ffmpeg/include")

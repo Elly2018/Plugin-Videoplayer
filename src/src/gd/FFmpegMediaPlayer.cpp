@@ -1,6 +1,6 @@
-#include <gd/Logger.h>
 #include "FFmpegMediaPlayer.h"
-#include <interface/MediaDecoderUtility.h>
+#include "Logger.h"
+#include "../interface/MediaDecoderUtility.h"
 
 #include <cstring>
 #include <math.h>

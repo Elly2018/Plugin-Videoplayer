@@ -1,4 +1,6 @@
 #pragma once
+#include <cstddef>
+#include <cinttypes>
 
 class IDecoder
 {
@@ -9,23 +11,23 @@ public:
 
 	struct BaseInfo {
 		bool isEnabled;
-		int currentIndex;
+		int32_t currentIndex;
 		int* otherIndex;
-		int otherIndexCount;
+		int32_t otherIndexCount;
 		double lastTime;
 		double totalTime;
 		BufferState bufferState;
 	};
 
 	struct VideoInfo : public BaseInfo {
-		int width;
-		int height;
+		int32_t width;
+		int32_t height;
 		float framerate;
 	};
 
 	struct AudioInfo : public BaseInfo {
-		unsigned int channels;
-		unsigned int sampleRate;
+		uint32_t channels;
+		uint32_t sampleRate;
 	};
 
 	struct SubtitleInfo : public BaseInfo {
@@ -54,5 +56,5 @@ public:
 	virtual void freePreloadFrame() = 0;
 	virtual void freeBufferFrame() = 0;
 
-	virtual int getMetaData(char**& key, char**& value) = 0;
+	virtual int32_t getMetaData(char**& key, char**& value) = 0;
 };

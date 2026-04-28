@@ -2,6 +2,8 @@
 * The low-level global functions responsible for manage decoders.
 */
 #pragma once
+#include <cinttypes>
+#include <cstddef>
 
 extern "C" {
 //
@@ -19,56 +21,56 @@ void nativeCleanDestroyedDecoders();
 /*
   Create a decoder instance, and push it to the decoder list
 */
-int nativeCreateDecoder(const char* filePath, int& id);
-int nativeCreateDecoderAsync(const char* filePath, int& id);
-int nativeGetDecoderState(int id);
-bool nativeStartDecoding(int id);
-void nativeScheduleDestroyDecoder(int id);
+int32_t nativeCreateDecoder(const char* filePath, int32_t& id);
+int32_t nativeCreateDecoderAsync(const char* filePath, int32_t& id);
+int32_t nativeGetDecoderState(int32_t id);
+bool nativeStartDecoding(int32_t id);
+void nativeScheduleDestroyDecoder(int32_t id);
 /*
   Destroy decoder by id
 */
-void nativeDestroyDecoder(int id);
-bool nativeGetOtherStreamIndex(int id, int type, int* li, int& count, int& current);
-bool nativeIsEOF(int id);
-double nativeGrabVideoFrame(int id, void** frameData, bool& frameReady, int& width, int& height);
-void nativeReleaseVideoFrame(int id);
+void nativeDestroyDecoder(int32_t id);
+bool nativeGetOtherStreamIndex(int32_t id, int32_t type, int* li, int32_t& count, int32_t& current);
+bool nativeIsEOF(int32_t id);
+double nativeGrabVideoFrame(int32_t id, void** frameData, bool& frameReady, int32_t& width, int32_t& height);
+void nativeReleaseVideoFrame(int32_t id);
 //
 //
 //	Video
 //
 //
-bool nativeIsVideoEnabled(int id);
-void nativeSetVideoEnable(int id, bool isEnable);
-void nativeGetVideoFormat(int id, int& width, int& height, float& framerate, float& totalTime);
-void nativeSetVideoTime(int id, float currentTime);
-bool nativeIsContentReady(int id);
-bool nativeIsVideoBufferFull(int id);
-bool nativeIsVideoBufferEmpty(int id);
-bool nativeIsAudioBufferEmpty(int id);
+bool nativeIsVideoEnabled(int32_t id);
+void nativeSetVideoEnable(int32_t id, bool isEnable);
+void nativeGetVideoFormat(int32_t id, int32_t& width, int32_t& height, float& framerate, float& totalTime);
+void nativeSetVideoTime(int32_t id, float currentTime);
+bool nativeIsContentReady(int32_t id);
+bool nativeIsVideoBufferFull(int32_t id);
+bool nativeIsVideoBufferEmpty(int32_t id);
+bool nativeIsAudioBufferEmpty(int32_t id);
 //
 //
 //	Audio
 //
 //
-bool nativeIsAudioEnabled(int id);
-void nativeSetAudioEnable(int id, bool isEnable);
-void nativeSetAudioAllChDataEnable(int id, bool isEnable);
-void nativeGetAudioFormat(int id, int& channel, int& sampleRate, float& totalTime);
-bool nativeSetAudioBufferTime(int id, float time);
-double nativeGetAudioData(int id, bool& frame_ready, unsigned char** audioData, int& frameSize, int& nb_channel, size_t& byte_per_sample);
-void nativeFreeAudioData(int id);
+bool nativeIsAudioEnabled(int32_t id);
+void nativeSetAudioEnable(int32_t id, bool isEnable);
+void nativeSetAudioAllChDataEnable(int32_t id, bool isEnable);
+void nativeGetAudioFormat(int32_t id, int32_t& channel, int32_t& sampleRate, float& totalTime);
+bool nativeSetAudioBufferTime(int32_t id, float time);
+double nativeGetAudioData(int32_t id, bool& frame_ready, unsigned char** audioData, int32_t& frameSize, int32_t& nb_channel, size_t& byte_per_sample);
+void nativeFreeAudioData(int32_t id);
 //
 //
 //	Seek
 //
 //
-void nativeSetSeekTime(int id, float sec);
-bool nativeIsSeekOver(int id);
+void nativeSetSeekTime(int32_t id, float sec);
+bool nativeIsSeekOver(int32_t id);
 //
 //
 //  Utility
 //
 //
-int nativeGetClock(int id);
-int nativeGetMetaData(const char* filePath, char*** key, char*** value);
+int32_t nativeGetClock(int32_t id);
+int32_t nativeGetMetaData(const char* filePath, char*** key, char*** value);
 }

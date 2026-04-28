@@ -1,8 +1,8 @@
 #pragma once
-#include <decoder/IDecoder.h>
 #include <thread>
 #include <mutex>
 #include <memory>
+#include "IDecoder.h"
  
 class AVDecoderHandler {
 public:
@@ -31,11 +31,11 @@ public:
 
 	void setSeekTime(float sec);
 	
-	double getVideoFrame(void** frameData, int& width, int& height);
+	double getVideoFrame(void** frameData, int32_t& width, int32_t& height);
 	double getNextVideoFrameTime();
-	double getAudioFrame(uint8_t** outputFrame, int& frameSize, int& nb_channel, size_t& byte_per_sample);
+	double getAudioFrame(uint8_t** outputFrame, int32_t& frameSize, int32_t& nb_channel, size_t& byte_per_sample);
 	double getNextAudioFrameTime();
-	bool getOtherIndex(MediaType type, int* li, int& count, int& current);
+	bool getOtherIndex(MediaType type, int32_t* li, int32_t& count, int32_t& current);
 	void freeVideoFrame();
 	void freeAudioFrame();
 	void freeAllPreloadFrame();

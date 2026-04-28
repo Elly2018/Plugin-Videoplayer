@@ -1,11 +1,10 @@
 #include "register_types.h"
+#include "FFmpegMediaPlayer.h"
 
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/godot.hpp>
-
-#include <gd/FFmpegMediaPlayer.h>
 
 using namespace godot;
 

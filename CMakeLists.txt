@@ -74,11 +74,6 @@ endif()
 # Create our library
 add_library( ${PROJECT_NAME} SHARED )
 
-target_compile_features( ${PROJECT_NAME}
-    PRIVATE
-        cxx_std_17
-)
-
 # LIB_ARCH is the architecture being built. It is set to the build system's architecture.
 # For macOS, we build a universal library (both arm64 and x86_64).
 set( LIB_ARCH ${CMAKE_SYSTEM_PROCESSOR} )

@@ -1,14 +1,14 @@
 #pragma once
-#include <decoder/IDecoder.h>
 #include <queue>
 #include <mutex>
+#include "IDecoder.h"
 
 extern "C" {
-#include "libavformat/avformat.h"
-#include "libavcodec/avcodec.h"
-#include "libswresample/swresample.h"
-#include "libswscale/swscale.h"
-#include <libavutil/fifo.h>
+	#include "libavformat/avformat.h"
+	#include "libavcodec/avcodec.h"
+	#include "libswresample/swresample.h"
+	#include "libswscale/swscale.h"
+	#include <libavutil/fifo.h>
 }
 
 class DecoderFFmpeg : public virtual IDecoder
