@@ -358,8 +358,15 @@ int DecoderFFmpeg::initSwrContext() {
 	}
 
 	int errorCode = 0;
-	int64_t inChannelLayout = av_get_default_channel_layout(mAudioCodecContext->channels);
-	uint64_t outChannelLayout = mIsAudioAllChEnabled ? inChannelLayout : AV_CH_LAYOUT_STEREO;
+
+	AVChannelLayout inChannelLayout;
+	av_channel_layout_default(&inChannelLayout, mAudioCodecContext->ch_layout.nb_channels);
+	AVChannelLayout outChannelLayout;
+	if(mIsAudioAllChEnabled){
+		av_channel_layout_copy(&outChannelLayout, &inChannelLayout);
+	}else{
+		outChannelLayout = (AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO;
+	}
 	AVSampleFormat inSampleFormat = mAudioCodecContext->sample_fmt;
 	AVSampleFormat outSampleFormat = AV_SAMPLE_FMT_FLT;
 	int inSampleRate = mAudioCodecContext->sample_rate;
@@ -372,9 +379,9 @@ int DecoderFFmpeg::initSwrContext() {
 	}
 
 	mSwrContext = swr_alloc();
-	swr_alloc_set_opts(mSwrContext,
-		outChannelLayout, outSampleFormat, outSampleRate,
-		inChannelLayout, inSampleFormat, inSampleRate,
+	swr_alloc_set_opts2(&mSwrContext,
+		&outChannelLayout, outSampleFormat, outSampleRate,
+		&inChannelLayout, inSampleFormat, inSampleRate,
 		0, nullptr);
 
 	
@@ -383,7 +390,7 @@ int DecoderFFmpeg::initSwrContext() {
 	}
 
 	//	Save the output audio format
-	mAudioInfo.channels = av_get_channel_layout_nb_channels(outChannelLayout);
+	mAudioInfo.channels = outChannelLayout.nb_channels;
 	mAudioInfo.sampleRate = outSampleRate;
 	mAudioInfo.totalTime = mAudioStream->duration <= 0 ? (double)(mAVFormatContext->duration) / AV_TIME_BASE : mAudioStream->duration * av_q2d(mAudioStream->time_base);
 	

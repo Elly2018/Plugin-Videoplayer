@@ -10,6 +10,7 @@ UnrealExtensionTemplate-build/
 
 build_godot_linux_amd64/
 src/ffmpeg/
+src/ffmpeg*/
 
 # SConstruct
 .sconf_temp

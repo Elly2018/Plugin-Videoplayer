@@ -9,8 +9,6 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-using namespace godot;
-
 void FFmpegMediaPlayer::_init_media() {
 	int32_t li = -1;
 	int32_t count = 0;
@@ -76,8 +74,8 @@ void FFmpegMediaPlayer::load_async()
 	load_path_async(path);
 }
 
-bool FFmpegMediaPlayer::load_path(String path) {
-	LOG("start load path: ", path);
+bool FFmpegMediaPlayer::load_path(String _path) {
+	LOG("start load path: ", _path);
 	if (player == nullptr) {
 		LOG_ERROR("You must register the player instance first");
 		return false;
@@ -90,7 +88,7 @@ bool FFmpegMediaPlayer::load_path(String path) {
 		//return false;
 	}
 
-	CharString utf8 = path.utf8();
+	CharString utf8 = _path.utf8();
 	const char *cstr = utf8.get_data();
 
 	nativeCreateDecoder(cstr, id);
@@ -107,15 +105,15 @@ bool FFmpegMediaPlayer::load_path(String path) {
 	return is_loaded;
 }
 
-void FFmpegMediaPlayer::load_path_async(String path) {
-	LOG("start load path: ", path);
+void FFmpegMediaPlayer::load_path_async(String _path) {
+	LOG("start load path: ", _path);
 	int d_state = nativeGetDecoderState(id);
 	if (d_state > 1) {
 		LOG_ERROR("Decoder state: ", d_state);
 		return;
 	}
 
-	CharString utf8 = path.utf8();
+	CharString utf8 = _path.utf8();
 	const char *cstr = utf8.get_data();
 
 	LOG("State change to LOADING");

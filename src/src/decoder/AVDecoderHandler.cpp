@@ -194,14 +194,15 @@ void AVDecoderHandler::startDecoding() {
 		mBufferState = LOADING;
 		while (mBufferState != NONE) {
 			switch (mBufferState) {
-			case LOADING:
-				if (mDecoderState == SEEK) continue;
-				if (!mIDecoder->buffering()) {
-					mBufferState = NONE;
-				}
-				break;
-			case NONE:
-				break;
+				case LOADING:
+					if (mDecoderState == SEEK) continue;
+					if (!mIDecoder->buffering()) {
+						mBufferState = NONE;
+					}
+					break;
+				default:
+				case NONE:
+					break;
 			}
 		}
 		mBufferThreadRunning = false;
@@ -219,17 +220,18 @@ void AVDecoderHandler::startDecoding() {
 		mDecoderState = DECODING;
 		while (mDecoderState != STOP) {
 			switch (mDecoderState) {
-			case DECODING:
-				if (!mIDecoder->decode()) {
-					mDecoderState = DECODE_EOF;
-				}
-				break;
-			case SEEK:
-				mIDecoder->seek(mSeekTime);
-				mDecoderState = DECODING;
-				break;
-			case DECODE_EOF:
-				break;
+				case DECODING:
+					if (!mIDecoder->decode()) {
+						mDecoderState = DECODE_EOF;
+					}
+					break;
+				case SEEK:
+					mIDecoder->seek(mSeekTime);
+					mDecoderState = DECODING;
+					break;
+				default:
+				case DECODE_EOF:
+					break;
 			}
 		}
         mDecodeThreadRunning = false;
@@ -264,19 +266,19 @@ IDecoder::SubtitleInfo AVDecoderHandler::getSubtitleInfo() {
 
 bool AVDecoderHandler::isVideoBufferEmpty() {
 	IDecoder::VideoInfo videoInfo = mIDecoder->getVideoInfo();
-	IDecoder::BufferState EMPTY = IDecoder::BufferState::EMPTY;
-	return videoInfo.isEnabled && videoInfo.bufferState == EMPTY;
+	IDecoder::BufferState _EMPTY = IDecoder::BufferState::EMPTY;
+	return videoInfo.isEnabled && videoInfo.bufferState == _EMPTY;
 }
 bool AVDecoderHandler::isAudioBufferEmpty() {
 	IDecoder::AudioInfo audioInfo = mIDecoder->getAudioInfo();
-	IDecoder::BufferState EMPTY = IDecoder::BufferState::EMPTY;
-	return audioInfo.isEnabled && audioInfo.bufferState == EMPTY;
+	IDecoder::BufferState _EMPTY = IDecoder::BufferState::EMPTY;
+	return audioInfo.isEnabled && audioInfo.bufferState == _EMPTY;
 }
 
 bool AVDecoderHandler::isVideoBufferFull() {
 	IDecoder::VideoInfo videoInfo = mIDecoder->getVideoInfo();
-	IDecoder::BufferState FULL = IDecoder::BufferState::FULL;
-	return videoInfo.isEnabled && videoInfo.bufferState == FULL;
+	IDecoder::BufferState _FULL = IDecoder::BufferState::FULL;
+	return videoInfo.isEnabled && videoInfo.bufferState == _FULL;
 }
 
 int AVDecoderHandler::getMetaData(char**& key, char**& value) {

@@ -142,12 +142,12 @@ public:
 	/*
 	  Loading path from string
 	*/
-	bool load_path(String path);
+	bool load_path(String _path);
 	/*
 	  Async loading path from string
 	  "async_loaded" signal will trigger when finish
 	*/
-	void load_path_async(String path);
+	void load_path_async(String _path);
 
 
 	/*

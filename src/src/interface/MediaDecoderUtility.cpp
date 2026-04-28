@@ -261,8 +261,9 @@ void nativeGetAudioFormat(int id, int& channel, int& sampleRate, float& totalTim
 bool nativeSetAudioBufferTime(int id, float time) 
 {
 	std::shared_ptr<VideoContext> videoCtx;
-	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { return false; }
+	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) return false;
 	videoCtx->audioBufferTime = time;
+	return false;
 }
 
 double nativeGetAudioData(int id, bool& frameReady, unsigned char** audioData, int& frameSize, int& nb_channel, size_t& byte_per_sample) {
@@ -342,8 +343,8 @@ int nativeGetClock(int id)
 	AVDecoderHandler* localAVDecoderHandler = videoCtx->avhandler.get();
 	if (localAVDecoderHandler == nullptr) return -1;
 	if (localAVDecoderHandler->getAudioInfo().isEnabled) return 1;
-	else if (localAVDecoderHandler->getVideoInfo().isEnabled) return -1;
-	else return -1;
+	if (localAVDecoderHandler->getVideoInfo().isEnabled) return -1;
+	return -1;
 }
 
 int nativeGetMetaData(const char* filePath, char*** key, char*** value) {
@@ -414,9 +415,9 @@ double nativeGrabVideoFrame(int id, void** frameData, bool& frameReady, int& wid
 	localAVDecoderHandler->getVideoInfo().isEnabled) {
       double videoDecCurTime = localAVDecoderHandler->getVideoInfo().lastTime;
       if (videoDecCurTime <= videoCtx->progressTime) {
-		  bool drop = true;
+		  //bool drop = true;
 		  double curFrameTime = -1.0;
-		  double nextFrameTime = -1.0;
+		  //double nextFrameTime = -1.0;
 		  curFrameTime = localAVDecoderHandler->getVideoFrame(frameData, width, height);
 		  bool pass = frameData != nullptr && curFrameTime != -1 && videoCtx->lastUpdateTimeV != curFrameTime;
           if (pass) {
