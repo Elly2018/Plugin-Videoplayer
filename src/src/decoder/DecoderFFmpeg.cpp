@@ -926,7 +926,7 @@ void DecoderFFmpeg::updateBufferState() {
 	}
 }
 
-void DecoderFFmpeg::printErrorMsg(int errorCode) {
+void DecoderFFmpeg::printErrorMsg(int32_t errorCode) {
 	char msg[500];
 	av_strerror(errorCode, msg, sizeof(msg));
 	LOG("Error massage: ", msg);

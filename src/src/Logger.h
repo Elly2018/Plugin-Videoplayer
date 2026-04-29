@@ -17,12 +17,12 @@
 	#define LOG_VERBOSE(X, ...) std::fprintf(stdout, BASE_LOG(X, __VA_ARGS__))
 	#define LOG_ERROR_VERBOSE(X, ...) std::fprintf(stderr, BASE_LOG(X, __VA_ARGS__))
 #else
-	#define LOG_VERBOSE
-	#define LOG_ERROR_VERBOSE
+	#define LOG_VERBOSE(X, ...)
+	#define LOG_ERROR_VERBOSE(X, ...)
 #endif
 #else
-	#define LOG
-	#define LOG_ERROR
-	#define LOG_VERBOSE
-	#define LOG_ERROR_VERBOSE
+	#define LOG(X, ...)
+	#define LOG_ERROR(X, ...)
+	#define LOG_VERBOSE(X, ...)
+	#define LOG_ERROR_VERBOSE(X, ...)
 #endif
