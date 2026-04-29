@@ -121,8 +121,7 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 	
 	if (format == nullptr) {
 		errorCode = avformat_open_input(&mAVFormatContext, filePath, nullptr, &opts);
-	}
-	else {
+	} else {
 		const AVInputFormat* mInputFormat = av_find_input_format(format);
 		errorCode = avformat_open_input(&mAVFormatContext, filePath, mInputFormat, &opts);
 	}
@@ -134,6 +133,8 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		printErrorMsg(errorCode);
 		return false;
 	}
+
+	LOG("[DecoderFFmpeg] Stream count: ", mAVFormatContext->nb_streams);
 
 	errorCode = avformat_find_stream_info(mAVFormatContext, nullptr);
 	if (errorCode < 0) {
