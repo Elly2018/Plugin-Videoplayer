@@ -16,7 +16,7 @@
 #endif
 
 typedef struct _VideoContext {
-	int id = -1;
+	int32_t id = -1;
 	std::string path = "";
   std::thread initThread;
   bool initThreadRunning = false;
@@ -35,7 +35,7 @@ typedef struct _VideoContext {
 std::list<std::shared_ptr<VideoContext>> videoContexts;
 typedef std::list<std::shared_ptr<VideoContext>>::iterator VideoContextIter;
 
-bool getVideoContext(int id, std::shared_ptr<VideoContext>& videoCtx) {
+bool getVideoContext(int32_t id, std::shared_ptr<VideoContext>& videoCtx) {
 	for (VideoContextIter it = videoContexts.begin(); it != videoContexts.end(); it++) {
 		if ((*it)->id == id) {
 			videoCtx = *it;
@@ -47,7 +47,7 @@ bool getVideoContext(int id, std::shared_ptr<VideoContext>& videoCtx) {
 	return false;
 }
 
-void removeVideoContext(int id) {
+void removeVideoContext(int32_t id) {
 	for (VideoContextIter it = videoContexts.begin(); it != videoContexts.end(); it++) {
 		if ((*it)->id == id) {
 			videoContexts.erase(it);
@@ -62,7 +62,7 @@ void nativeCleanAll() {
         idList.push_back(videoCtx->id);
     }
 
-    for(int id : idList) {
+    for(int32_t id : idList) {
         nativeDestroyDecoder(id);
     }
 }
@@ -75,15 +75,15 @@ void nativeCleanDestroyedDecoders() {
         }
     }
 
-    for(int id : idList) {
+    for(int32_t id : idList) {
         nativeDestroyDecoder(id);
     }
 }
 
-int nativeCreateDecoderAsync(const char* filePath, int& id) {
+int32_t nativeCreateDecoderAsync(const char* filePath, int32_t& id) {
 	LOG("[ViveMediaDecoder] Query available decoder id.");
 
-	int newID = 0;
+	int32_t newID = 0;
     std::shared_ptr<VideoContext> videoCtx;
 	while (getVideoContext(newID, videoCtx)) { newID++; }
 
@@ -106,10 +106,10 @@ int nativeCreateDecoderAsync(const char* filePath, int& id) {
 }
 
 //	Synchronized init. Used for thumbnail currently.
-int nativeCreateDecoder(const char* filePath, int& id) {
+int32_t nativeCreateDecoder(const char* filePath, int32_t& id) {
 	LOG("[ViveMediaDecoder] Query available decoder id.");
 
-	int newID = 0;
+	int32_t newID = 0;
     std::shared_ptr<VideoContext> videoCtx;
 	while (getVideoContext(newID, videoCtx)) { newID++; }
 
@@ -126,14 +126,14 @@ int nativeCreateDecoder(const char* filePath, int& id) {
 	return 0;
 }
 
-int nativeGetDecoderState(int id) {
+int32_t nativeGetDecoderState(int32_t id) {
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { return -1; }
 		
 	return videoCtx->avhandler->getDecoderState();
 }
 
-bool nativeStartDecoding(int id) {
+bool nativeStartDecoding(int32_t id) {
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { return false; }
 
@@ -153,14 +153,14 @@ bool nativeStartDecoding(int id) {
 	return true;
 }
 
-void nativeScheduleDestroyDecoder(int id) {
+void nativeScheduleDestroyDecoder(int32_t id) {
     std::shared_ptr<VideoContext> videoCtx;
     if (!getVideoContext(id, videoCtx)) { return; }
     videoCtx->avhandler->stop(); // Async
     videoCtx->destroying = true;
 }
 
-void nativeDestroyDecoder(int id) {
+void nativeDestroyDecoder(int32_t id) {
   std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return; }
 
@@ -184,7 +184,7 @@ void nativeDestroyDecoder(int id) {
 	videoCtx->id = -1;
 }
 
-bool nativeGetOtherStreamIndex(int id, int type, int32_t& li, int& count, int& current) {
+bool nativeGetOtherStreamIndex(int32_t id, int32_t type, int32_t& li, int32_t& count, int32_t& current) {
 	std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { return false; }
 
@@ -192,7 +192,7 @@ bool nativeGetOtherStreamIndex(int id, int type, int32_t& li, int& count, int& c
 }
 
 //	Video
-bool nativeIsVideoEnabled(int id) {
+bool nativeIsVideoEnabled(int32_t id) {
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return false; }
 
@@ -206,7 +206,7 @@ bool nativeIsVideoEnabled(int id) {
 	return ret;
 }
 
-void nativeGetVideoFormat(int id, int& width, int& height, float& framerate, float& totalTime) {
+void nativeGetVideoFormat(int32_t id, int32_t& width, int32_t& height, float& framerate, float& totalTime) {
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return; }
 
@@ -222,14 +222,14 @@ void nativeGetVideoFormat(int id, int& width, int& height, float& framerate, flo
 	totalTime = (float)(videoInfo.totalTime);
 }
 
-void nativeSetVideoTime(int id, float currentTime) {
+void nativeSetVideoTime(int32_t id, float currentTime) {
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return; }
 
 	videoCtx->progressTime = currentTime;
 }
 
-bool nativeIsAudioEnabled(int id) {
+bool nativeIsAudioEnabled(int32_t id) {
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return false; }
 
@@ -243,7 +243,7 @@ bool nativeIsAudioEnabled(int id) {
 	return ret;
 }
 
-void nativeGetAudioFormat(int id, int& channel, int& sampleRate, float& totalTime) {
+void nativeGetAudioFormat(int32_t id, int32_t& channel, int32_t& sampleRate, float& totalTime) {
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return; }
 
@@ -258,7 +258,7 @@ void nativeGetAudioFormat(int id, int& channel, int& sampleRate, float& totalTim
 	totalTime = (float)(audioInfo.totalTime);
 }
 
-bool nativeSetAudioBufferTime(int id, float time) 
+bool nativeSetAudioBufferTime(int32_t id, float time) 
 {
 	std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) return false;
@@ -266,7 +266,7 @@ bool nativeSetAudioBufferTime(int id, float time)
 	return false;
 }
 
-double nativeGetAudioData(int id, bool& frameReady, unsigned char** audioData, int& frameSize, int& nb_channel, size_t& byte_per_sample) {
+double nativeGetAudioData(int32_t id, bool& frameReady, unsigned char** audioData, int32_t& frameSize, int32_t& nb_channel, size_t& byte_per_sample) {
 	frameReady = false;
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return -1.0; }
@@ -284,14 +284,14 @@ double nativeGetAudioData(int id, bool& frameReady, unsigned char** audioData, i
 	return curFrameTime;
 }
 
-void nativeFreeAudioData(int id) {
+void nativeFreeAudioData(int32_t id) {
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return; }
 	videoCtx->audioFrameLocked = false;
 	videoCtx->avhandler->freeAudioFrame();
 }
 
-void nativeSetSeekTime(int id, float sec) {
+void nativeSetSeekTime(int32_t id, float sec) {
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return; }
 
@@ -309,34 +309,34 @@ void nativeSetSeekTime(int id, float sec) {
 	}
 }
 
-bool nativeIsSeekOver(int id) {
+bool nativeIsSeekOver(int32_t id) {
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return false; }
 	
 	return !(videoCtx->avhandler->getDecoderState() == AVDecoderHandler::DecoderState::SEEK);
 }
 
-bool nativeIsVideoBufferFull(int id) {
+bool nativeIsVideoBufferFull(int32_t id) {
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return false; }
 
 	return videoCtx->avhandler->isVideoBufferFull();
 }
 
-bool nativeIsVideoBufferEmpty(int id) {
+bool nativeIsVideoBufferEmpty(int32_t id) {
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return false; }
 	
 	return videoCtx->avhandler->isVideoBufferEmpty();
 }
-bool nativeIsAudioBufferEmpty(int id) {
+bool nativeIsAudioBufferEmpty(int32_t id) {
 	std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return false; }
 
 	return videoCtx->avhandler->isAudioBufferEmpty();
 }
 
-int nativeGetClock(int id) 
+int32_t nativeGetClock(int32_t id) 
 {
 	std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return -1; }
@@ -347,18 +347,18 @@ int nativeGetClock(int id)
 	return -1;
 }
 
-int nativeGetMetaData(const char* filePath, char*** key, char*** value) {
+int32_t nativeGetMetaData(const char* filePath, char*** key, char*** value) {
     std::unique_ptr<AVDecoderHandler> avHandler = std::make_unique<AVDecoderHandler>();
 	avHandler->init(filePath);
 
 	char** metaKey = nullptr;
 	char** metaValue = nullptr;
-	int metaCount = avHandler->getMetaData(metaKey, metaValue);
+	int32_t metaCount = avHandler->getMetaData(metaKey, metaValue);
 
 	*key = (char**)malloc(sizeof(char*) * metaCount);
 	*value = (char**)malloc(sizeof(char*) * metaCount);
 
-	for (int i = 0; i < metaCount; i++) {
+	for (int32_t i = 0; i < metaCount; i++) {
 		(*key)[i] = (char*)malloc(strlen(metaKey[i]) + 1);
 		(*value)[i] = (char*)malloc(strlen(metaValue[i]) + 1);
 		strcpy_s((*key)[i], strlen(metaKey[i]) + 1, metaKey[i]);
@@ -371,35 +371,35 @@ int nativeGetMetaData(const char* filePath, char*** key, char*** value) {
 	return metaCount;
 }
 
-bool nativeIsContentReady(int id) {
+bool nativeIsContentReady(int32_t id) {
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return false; }
 
 	return videoCtx->isContentReady;
 }
 
-void nativeSetVideoEnable(int id, bool isEnable) {
+void nativeSetVideoEnable(int32_t id, bool isEnable) {
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return; }
 
 	videoCtx->avhandler->setVideoEnable(isEnable);
 }
 
-void nativeSetAudioEnable(int id, bool isEnable) {
+void nativeSetAudioEnable(int32_t id, bool isEnable) {
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return; }
 
 	videoCtx->avhandler->setAudioEnable(isEnable);
 }
 
-void nativeSetAudioAllChDataEnable(int id, bool isEnable) {
+void nativeSetAudioAllChDataEnable(int32_t id, bool isEnable) {
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return; }
 
 	videoCtx->avhandler->setAudioAllChDataEnable(isEnable);
 }
 
-double nativeGrabVideoFrame(int id, void** frameData, bool& frameReady, int& width, int& height) {
+double nativeGrabVideoFrame(int32_t id, void** frameData, bool& frameReady, int32_t& width, int32_t& height) {
     frameReady = false;
     std::shared_ptr<VideoContext> videoCtx;
     if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { return -1.0; }
@@ -432,14 +432,14 @@ double nativeGrabVideoFrame(int id, void** frameData, bool& frameReady, int& wid
 	return -1.0;
 }
 
-void nativeReleaseVideoFrame(int id) {
+void nativeReleaseVideoFrame(int32_t id) {
     std::shared_ptr<VideoContext> videoCtx;
     if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { return; }
     videoCtx->avhandler->freeVideoFrame();
     videoCtx->videoFrameLocked = false;
 }
 
-bool nativeIsEOF(int id) {
+bool nativeIsEOF(int32_t id) {
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { return true; }
 

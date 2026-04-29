@@ -11,6 +11,9 @@ extern "C" {
 	#include <libavutil/fifo.h>
 }
 
+///
+/// FFmpeg decoder class
+///
 class DecoderFFmpeg : public virtual IDecoder
 {
 public:

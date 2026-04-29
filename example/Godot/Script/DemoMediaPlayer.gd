@@ -2,7 +2,7 @@ extends Node
 
 @export var play_on_start: bool;
 @export var loop: bool;
-@export var uri: String = "https://test-streams.mux.dev/x36xhzz/url_6/193039199_mp4_h264_aac_hq_7.m3u8";
+@export var uri: String = "/home/funique0807/Videos/test.mp4";
 @export var geo: GeometryInstance3D;
 @export var texture_rect: TextureRect;
 

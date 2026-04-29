@@ -10,6 +10,7 @@ UnityExtensionTemplate-build/
 UnrealExtensionTemplate-build/
 
 build_godot_linux_amd64/
+reference
 src/ffmpeg/
 src/ffmpeg*/
 example/Godot/addons/videoplayer/lib/Linux-AMD64/*.so
