@@ -97,8 +97,8 @@ bool FFmpegMediaPlayer::load_path(String _path) {
 	if (is_loaded) {
 		_init_media();
 	} else {
-		LOG("nativeGetDecoderState is false");
-		LOG("State change to UNINITIALIZED");
+		LOG("[FFmpegMediaPlayer] nativeGetDecoderState is false");
+		LOG("[FFmpegMediaPlayer] State change to UNINITIALIZED");
 		state = State::UNINITIALIZED;
 	}
 
@@ -106,7 +106,7 @@ bool FFmpegMediaPlayer::load_path(String _path) {
 }
 
 void FFmpegMediaPlayer::load_path_async(String _path) {
-	LOG("start load path: ", _path);
+	LOG("[FFmpegMediaPlayer] start load path: ", _path);
 	int d_state = nativeGetDecoderState(id);
 	if (d_state > 1) {
 		LOG_ERROR("Decoder state: ", d_state);
@@ -116,7 +116,7 @@ void FFmpegMediaPlayer::load_path_async(String _path) {
 	CharString utf8 = _path.utf8();
 	const char *cstr = utf8.get_data();
 
-	LOG("State change to LOADING");
+	LOG("[FFmpegMediaPlayer] State change to LOADING");
 	state = State::LOADING;
 
 	nativeCreateDecoderAsync(cstr, id);
@@ -124,7 +124,7 @@ void FFmpegMediaPlayer::load_path_async(String _path) {
 
 void FFmpegMediaPlayer::play() {
 	if (state != State::INITIALIZED) {
-		LOG("play func failed, because state is not INITIALIZED");
+		LOG("[FFmpegMediaPlayer] play func failed, because state is not INITIALIZED");
 		return;
 	}
 
@@ -137,14 +137,14 @@ void FFmpegMediaPlayer::play() {
 
 	global_start_time = Time::get_singleton()->get_unix_time_from_system();
 
-	LOG("start change to Decoding");
+	LOG("[FFmpegMediaPlayer] start change to Decoding");
 	state = State::DECODING;
 	audio_init();
 }
 
 void FFmpegMediaPlayer::stop() {
 	if (state < State::DECODING) {
-		LOG("Stop failed, decoder state currently is: ", (int32_t)state);
+		LOG("[FFmpegMediaPlayer] Stop failed, decoder state currently is: ", (int32_t)state);
 		return;
 	}
 
@@ -232,11 +232,11 @@ void FFmpegMediaPlayer::_process(float delta) {
 			if (nativeGetDecoderState(id) == 1) {
 				_init_media();
 				play();
-				LOG("Loading successful");
+				LOG("[FFmpegMediaPlayer] Loading successful");
 			} else if (nativeGetDecoderState(id) == -1) {
 				state = State::UNINITIALIZED;
-				LOG_ERROR("Main loop, async loading failed, nativeGetDecoderState == -1");
-				LOG_ERROR("Init failed");
+				LOG_ERROR("[FFmpegMediaPlayer | ERROR] Main loop, async loading failed, nativeGetDecoderState == -1");
+				LOG_ERROR("[FFmpegMediaPlayer | ERROR] Init failed");
 			}
 		} break;
 
@@ -270,7 +270,7 @@ void FFmpegMediaPlayer::_process(float delta) {
 					image_data.resize(data_size);
 					memcpy(image_data.ptrw(), frame_data, data_size);
 					//memmove(image_data.ptrw(), frame_data, data_size);
-					LOG_VERBOSE("data size: ", data_size, ", actual frame size: ", image_data);
+					LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] data size: ", data_size, ", actual frame size: ", image_data);
 					image->call_deferred("set_data", width, height, false, Image::FORMAT_RGB8, image_data);
 					texture->set_deferred("image", image);
 					emit_signal("video_update", texture, Vector2i(width, height));
@@ -458,12 +458,12 @@ FFmpegMediaPlayer::FFmpegMediaPlayer() {
 	texture->set_deferred("image", image);
 	emit_signal("video_update", texture, Vector2i(1, 1));
 
-	LOG("FFmpegMediaPlayer instance created.");
+	LOG("[FFmpegMediaPlayer] FFmpegMediaPlayer instance created.");
 }
 
 FFmpegMediaPlayer::~FFmpegMediaPlayer() {
 	nativeScheduleDestroyDecoder(id);
-	LOG("FFmpegMediaPlayer instance destroy.");
+	LOG("[FFmpegMediaPlayer] FFmpegMediaPlayer instance destroy.");
 }
 
 void FFmpegMediaPlayer::_notification(int p_what)

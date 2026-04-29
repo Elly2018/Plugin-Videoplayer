@@ -99,7 +99,7 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		return false;
 	}
 
-	LOG("Network init");
+	LOG("[DecoderFFmpeg] Network init");
 	avformat_network_init();
 	//av_register_all();
 
@@ -129,14 +129,14 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 	/// After we open the input, we can free opts variable
 	av_dict_free(&opts);
 	if (errorCode < 0) {
-		LOG("avformat_open_input error: ", errorCode);
+		LOG("[DecoderFFmpeg] avformat_open_input error: ", errorCode);
 		printErrorMsg(errorCode);
 		return false;
 	}
 
 	errorCode = avformat_find_stream_info(mAVFormatContext, nullptr);
 	if (errorCode < 0) {
-		LOG("avformat_find_stream_info error: ", errorCode);
+		LOG("[DecoderFFmpeg] avformat_find_stream_info error: ", errorCode);
 		printErrorMsg(errorCode);
 		return false;
 	}
@@ -146,10 +146,10 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 	type = av_hwdevice_iterate_types(type);
 #endif
 	/* Video initialization */
-	LOG("Video initialization  ");
+	LOG("[DecoderFFmpeg] Video initialization  ");
 	st_index[AVMEDIA_TYPE_VIDEO] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_VIDEO, st_index[AVMEDIA_TYPE_VIDEO], -1, nullptr, 0);
 	if (st_index[AVMEDIA_TYPE_VIDEO] < 0) {
-		LOG("video stream not found.");
+		LOG("[DecoderFFmpeg] video stream not found.");
 		mVideoInfo.isEnabled = false;
 	} else {
 		mVideoInfo.isEnabled = true;
@@ -163,10 +163,10 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 
 			mVideoCodecContext->get_format = get_hw_format;
 			hw_decoder_init(mVideoCodecContext, type);
-			LOG("hwaccel: ", type);
+			LOG("[DecoderFFmpeg] hwaccel: ", type);
 		}
 #endif
-		LOG("Video codec id: ", mVideoCodecContext->codec_id);
+		LOG("[DecoderFFmpeg] Video codec id: ", mVideoCodecContext->codec_id);
 		mVideoCodec = avcodec_find_decoder(mVideoCodecContext->codec_id);
 		if (mVideoCodec == nullptr) {
 			LOG("Video codec not available.");
@@ -198,7 +198,7 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 	for (int i = 0;; i++) {
 		const AVCodecHWConfig* config = avcodec_get_hw_config(mVideoCodec, i);
 		if (!config) {
-			LOG_ERROR("Decoder ", mVideoCodec->name, " does not support device type, ", av_hwdevice_get_type_name(type));
+			LOG_ERROR("[DecoderFFmpeg | ERROR] Decoder ", mVideoCodec->name, " does not support device type, ", av_hwdevice_get_type_name(type));
 			hw_pix_fmt = AV_PIX_FMT_NONE;
 		}
 		if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
@@ -210,21 +210,21 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 #endif
 
 	/* Audio initialization */
-	LOG("Audio initialization ");
+	LOG("[DecoderFFmpeg] Audio initialization ");
 	st_index[AVMEDIA_TYPE_AUDIO] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_AUDIO, st_index[AVMEDIA_TYPE_AUDIO], st_index[AVMEDIA_TYPE_VIDEO], nullptr, 0);
 	if (st_index[AVMEDIA_TYPE_AUDIO] < 0) {
-		LOG("audio stream not found. ");
+		LOG("[DecoderFFmpeg] audio stream not found. ");
 		mAudioInfo.isEnabled = false;
 	} else {
 		mAudioInfo.isEnabled = true;
 		mAudioStream = mAVFormatContext->streams[st_index[AVMEDIA_TYPE_AUDIO]];
 		mAudioCodecContext = avcodec_alloc_context3(NULL);
         avcodec_parameters_to_context(mAudioCodecContext, mAudioStream->codecpar);
-		LOG("Audio codec id: ", mAudioCodecContext->codec_id);
+		LOG("[DecoderFFmpeg] Audio codec id: ", mAudioCodecContext->codec_id);
 		mAudioCodecContext->pkt_timebase = mAudioStream->time_base;
         mAudioCodec = avcodec_find_decoder(mAudioCodecContext->codec_id);
 		if (mAudioCodec == nullptr) {
-			LOG("Audio codec not available. ");
+			LOG("[DecoderFFmpeg] Audio codec not available. ");
 			return false;
 		}
 		AVDictionary* autoThread = nullptr;
@@ -233,14 +233,14 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		mAudioCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
 		errorCode = avcodec_open2(mAudioCodecContext, mAudioCodec, &autoThread);
 		if (errorCode < 0) {
-			LOG("Could not open audio codec(%x). ", errorCode);
+			LOG("[DecoderFFmpeg] Could not open audio codec(%x). ", errorCode);
 			printErrorMsg(errorCode);
 			return false;
 		}
 
 		errorCode = initSwrContext();
 		if (errorCode < 0) {
-			LOG("Init SwrContext error.(%x) ", errorCode);
+			LOG("[DecoderFFmpeg] Init SwrContext error.(%x) ", errorCode);
 			printErrorMsg(errorCode);
 			return false;
 		}
@@ -260,7 +260,7 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 	mSubtitleInfo.otherIndex = subtitleIndex.data();
 	mSubtitleInfo.otherIndexCount = subtitleIndex.size();
 
-	LOG("Finished initialization");
+	LOG("[DecoderFFmpeg] Finished initialization");
 	mIsInitialized = true;
 	print_stream_maps();
 	return true;
@@ -268,7 +268,7 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 
 bool DecoderFFmpeg::decode() {
 	if (!mIsInitialized) {
-		LOG("Not initialized. ");
+		LOG("[DecoderFFmpeg] Not initialized. ");
 		return false;
 	}
 
@@ -284,7 +284,7 @@ bool DecoderFFmpeg::decode() {
 
 bool DecoderFFmpeg::buffering() {
 	if (!mIsInitialized) {
-		LOG("Not initialized. ");
+		LOG("[DecoderFFmpeg] Not initialized. ");
 		return false;
 	}
 
@@ -405,7 +405,7 @@ int DecoderFFmpeg::initSwrContext() {
 double DecoderFFmpeg::getVideoFrame(void** frameData, int32_t& width, int32_t& height) {
 	std::lock_guard<std::mutex> lock(mVideoMutex);
 	if (!mIsInitialized || mVideoFrames.size() == 0) {
-		LOG_VERBOSE("Video frame not available. ");
+		LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Video frame not available. ");
         *frameData = nullptr;
 		return -1;
 	}
@@ -419,7 +419,7 @@ double DecoderFFmpeg::getVideoFrame(void** frameData, int32_t& width, int32_t& h
 	double timeInSec = av_q2d(mVideoStream->time_base) * timeStamp;
 	mVideoInfo.lastTime = timeInSec;
 
-	LOG_VERBOSE("mVideoInfo.lastTime: ", timeInSec);
+	LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] mVideoInfo.lastTime: ", timeInSec);
 
 	return timeInSec;
 }
@@ -427,7 +427,7 @@ double DecoderFFmpeg::getVideoFrame(void** frameData, int32_t& width, int32_t& h
 double DecoderFFmpeg::getAudioFrame(unsigned char** outputFrame, int32_t& frameSize, int32_t& nb_channel, size_t& byte_per_sample) {
 	std::lock_guard<std::mutex> lock(mAudioMutex);
 	if (!mIsInitialized || mAudioFrames.size() == 0) {
-		LOG_VERBOSE("Audio frame not available. ");
+		LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Audio frame not available. ");
 		*outputFrame = nullptr;
 		return -1;
 	}
@@ -441,7 +441,7 @@ double DecoderFFmpeg::getAudioFrame(unsigned char** outputFrame, int32_t& frameS
 	double timeInSec = av_q2d(mAudioStream->time_base) * timeStamp;
 	mAudioInfo.lastTime = timeInSec;
 
-	LOG_VERBOSE("mAudioInfo.lastTime: ", timeInSec);
+	LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] mAudioInfo.lastTime: ", timeInSec);
 
 	return timeInSec;
 }
@@ -615,16 +615,25 @@ bool DecoderFFmpeg::isPreloadBlocked() {
 
 void DecoderFFmpeg::preloadVideoFrame()
 {
-	int ret = avcodec_send_packet(mVideoCodecContext, mPacket);
+	int32_t ret = avcodec_send_packet(mVideoCodecContext, mPacket);
 	if (ret != 0) {
-		LOG_VERBOSE("Video frame update failed: avcodec_send_packet ", ret);
+		LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Video frame update failed: avcodec_send_packet ", ret);
 		return;
 	}
 	do {
 		AVFrame* srcFrame = av_frame_alloc();
 		ret = avcodec_receive_frame(mVideoCodecContext, srcFrame);
 		if (ret != 0) {
-			LOG_VERBOSE("Audio frame update failed: avcodec_receive_frame ", ret);
+			LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Video frame update failed: avcodec_receive_frame ", ret);
+			if(ret == AVERROR(EAGAIN)){
+				LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] ", ret, ": AVERROR(EAGAIN)");
+			}
+			if(ret == AVERROR_EOF){
+				LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] ", ret, ": AVERROR_EOF");
+			}
+			if(ret == AVERROR(EINVAL)){
+				LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] ", ret, ": AVERROR(EINVAL)");
+			}
 			return;
 		}
 #ifdef DECODER_HW
@@ -638,7 +647,7 @@ void DecoderFFmpeg::preloadVideoFrame()
 			destFrame->width = srcFrame->width;
 			destFrame->height = srcFrame->height;
 			if (ret < 0) {
-				LOG_ERROR("av_hwframe_transfer_data error: ", ret);
+				LOG_ERROR("[DecoderFFmpeg | ERROR] av_hwframe_transfer_data error: ", ret);
 			}
 			av_frame_free(&srcFrame);
 			mVideoFramesPreload.push(destFrame);
@@ -656,14 +665,14 @@ void DecoderFFmpeg::preloadAudioFrame()
 {
 	int ret = avcodec_send_packet(mAudioCodecContext, mPacket);
 	if (ret != 0) {
-		LOG_VERBOSE("Audio frame update failed: avcodec_send_packet ", ret);
+		LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Audio frame update failed: avcodec_send_packet ", ret);
 		return;
 	}
 	do {
 		AVFrame* srcFrame = av_frame_alloc();
 		ret = avcodec_receive_frame(mAudioCodecContext, srcFrame);
 		if (ret != 0) {
-			LOG_VERBOSE("Audio frame update failed: avcodec_receive_frame ", ret);
+			LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Audio frame update failed: avcodec_receive_frame ", ret);
 			return;
 		}
 		mAudioFramesPreload.push(srcFrame);
@@ -679,13 +688,13 @@ void DecoderFFmpeg::updateVideoFrame() {
 	AVFrame* srcFrame = mVideoFramesPreload.front();
 	mVideoFramesPreload.pop();
 
-	//clock_t start = clock();
+	clock_t start = clock();
 
 	int width = srcFrame->width;
 	int height = srcFrame->height;
 
 	const AVPixelFormat dstFormat = COLORPIX;
-	LOG_VERBOSE("Video format. w: ", width, ", h: ", height, ", f: ", dstFormat);
+	LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Video format. w: ", width, ", h: ", height, ", f: ", dstFormat);
 	AVFrame* dstFrame = av_frame_alloc();
 	av_frame_copy_props(dstFrame, srcFrame);
 
@@ -696,11 +705,11 @@ void DecoderFFmpeg::updateVideoFrame() {
 	
 	//av_image_alloc(dstFrame->data, dstFrame->linesize, dstFrame->width, dstFrame->height, dstFormat, 0)
 	int numBytes = av_image_get_buffer_size(dstFormat, width, height, 1);
-	LOG_VERBOSE("Number of bytes: ", numBytes);
+	LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Number of bytes: ", numBytes);
 	AVBufferRef* buffer = av_buffer_alloc(numBytes * sizeof(uint8_t));
 	//avpicture_fill((AVPicture *)dstFrame,buffer->data,dstFormat,width,height);
 	if (buffer == nullptr) {
-		LOG_VERBOSE("The video frame buffer is nullptr");
+		LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] The video frame buffer is nullptr");
 		return;
 	}
 
@@ -728,7 +737,7 @@ void DecoderFFmpeg::updateVideoFrame() {
 
 	av_frame_free(&srcFrame);
 
-	LOG_VERBOSE("updateVideoFrame = ", (float)(clock() - start) / CLOCKS_PER_SEC);
+	LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] updateVideoFrame = ", (float)(clock() - start) / CLOCKS_PER_SEC);
 
 	std::lock_guard<std::mutex> lock(mVideoMutex);
 	mVideoFrames.push(dstFrame);
