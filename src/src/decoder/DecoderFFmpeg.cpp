@@ -397,7 +397,7 @@ int DecoderFFmpeg::initSwrContext() {
 	return errorCode;
 }
 
-double DecoderFFmpeg::getVideoFrame(void** frameData, int& width, int& height) {
+double DecoderFFmpeg::getVideoFrame(void** frameData, int32_t& width, int32_t& height) {
 	std::lock_guard<std::mutex> lock(mVideoMutex);
 	if (!mIsInitialized || mVideoFrames.size() == 0) {
 		LOG_VERBOSE("Video frame not available. ");
@@ -419,7 +419,7 @@ double DecoderFFmpeg::getVideoFrame(void** frameData, int& width, int& height) {
 	return timeInSec;
 }
 
-double DecoderFFmpeg::getAudioFrame(unsigned char** outputFrame, int& frameSize, int& nb_channel, size_t& byte_per_sample) {
+double DecoderFFmpeg::getAudioFrame(unsigned char** outputFrame, int32_t& frameSize, int32_t& nb_channel, size_t& byte_per_sample) {
 	std::lock_guard<std::mutex> lock(mAudioMutex);
 	if (!mIsInitialized || mAudioFrames.size() == 0) {
 		LOG_VERBOSE("Audio frame not available. ");
