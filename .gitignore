@@ -12,6 +12,8 @@ UnrealExtensionTemplate-build/
 build_godot_linux_amd64/
 src/ffmpeg/
 src/ffmpeg*/
+example/Godot/addons/videoplayer/lib/Linux-AMD64/*.so
+example/Godot/addons/videoplayer/lib/Windows-AMD64/*.dll
 
 # SConstruct
 .sconf_temp
