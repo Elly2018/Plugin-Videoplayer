@@ -87,7 +87,7 @@ bool DecoderFFmpeg::init(const char* filePath) {
 }
 
 bool DecoderFFmpeg::init(const char* format, const char* filePath) {
-	int st_index[AVMEDIA_TYPE_NB];
+	int32_t st_index[AVMEDIA_TYPE_NB];
 
 	if (mIsInitialized) {
 		LOG("Decoder has been init.");
@@ -118,13 +118,15 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		av_dict_set(&opts, "rtsp_transport", "tcp", 0);
 	}
 	
-	if (sizeof(format) == 0) {
+	if (format == nullptr) {
 		errorCode = avformat_open_input(&mAVFormatContext, filePath, nullptr, &opts);
 	}
 	else {
 		const AVInputFormat* mInputFormat = av_find_input_format(format);
 		errorCode = avformat_open_input(&mAVFormatContext, filePath, mInputFormat, &opts);
 	}
+
+	/// After we open the input, we can free opts variable
 	av_dict_free(&opts);
 	if (errorCode < 0) {
 		LOG("avformat_open_input error: ", errorCode);
@@ -153,10 +155,12 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		mVideoInfo.isEnabled = true;
 		mVideoStream = mAVFormatContext->streams[st_index[AVMEDIA_TYPE_VIDEO]];
         mVideoCodecContext = avcodec_alloc_context3(NULL);
+		if (!mVideoCodecContext) return false;
         mVideoCodecContext->refs = 1;
-        avcodec_parameters_to_context(mVideoCodecContext, mVideoStream->codecpar);
+        int32_t ret = avcodec_parameters_to_context(mVideoCodecContext, mVideoStream->codecpar);
 #ifdef DECODER_HW
 		if (type != AV_HWDEVICE_TYPE_NONE) {
+
 			mVideoCodecContext->get_format = get_hw_format;
 			hw_decoder_init(mVideoCodecContext, type);
 			LOG("hwaccel: ", type);
@@ -217,6 +221,7 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		mAudioCodecContext = avcodec_alloc_context3(NULL);
         avcodec_parameters_to_context(mAudioCodecContext, mAudioStream->codecpar);
 		LOG("Audio codec id: ", mAudioCodecContext->codec_id);
+		mAudioCodecContext->pkt_timebase = mAudioStream->time_base;
         mAudioCodec = avcodec_find_decoder(mAudioCodecContext->codec_id);
 		if (mAudioCodec == nullptr) {
 			LOG("Audio codec not available. ");
@@ -270,7 +275,7 @@ bool DecoderFFmpeg::decode() {
 	if (!isBuffBlocked()) {
 		updateVideoFrame();
 		updateAudioFrame();
-		updateAudioFrame();
+		//updateAudioFrame();
 		//updateSubtitleFrame();
 	}
 
