@@ -88,6 +88,7 @@ bool DecoderFFmpeg::init(const char* filePath) {
 
 bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 	int32_t st_index[AVMEDIA_TYPE_NB];
+	static const char* wanted_stream_spec[AVMEDIA_TYPE_NB] = {0};
 
 	if (mIsInitialized) {
 		LOG("Decoder has been init.");
@@ -145,6 +146,27 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 #ifdef DECODER_HW
 	type = av_hwdevice_iterate_types(type);
 #endif
+
+	for (int32_t i = 0; i < mAVFormatContext->nb_streams; i++) {
+        AVStream *st = mAVFormatContext->streams[i];
+        enum AVMediaType type = st->codecpar->codec_type;
+        st->discard = AVDISCARD_ALL;
+        if (type >= 0 && wanted_stream_spec[type] && st_index[type] == -1)
+            if (avformat_match_stream_specifier(mAVFormatContext, st, wanted_stream_spec[type]) > 0)
+                st_index[type] = i;
+        // Clear all pre-existing metadata update flags to avoid printing
+        // initial metadata as update.
+        st->event_flags &= ~AVSTREAM_EVENT_FLAG_METADATA_UPDATED;
+    }
+	for (int32_t i = 0; i < AVMEDIA_TYPE_NB; i++) {
+        if (wanted_stream_spec[i] && st_index[i] == -1) {
+			LOG_ERROR("[DecoderFFmpeg | ERROR] Stream specifier ", wanted_stream_spec[i]);
+			LOG_ERROR("[DecoderFFmpeg | ERROR] does not match any ", av_get_media_type_string((AVMediaType)i));
+			LOG_ERROR("[DecoderFFmpeg | ERROR] stream");
+            st_index[i] = INT_MAX;
+        }
+    }
+
 	/* Video initialization */
 	LOG("[DecoderFFmpeg] Video initialization  ");
 	st_index[AVMEDIA_TYPE_VIDEO] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_VIDEO, st_index[AVMEDIA_TYPE_VIDEO], -1, nullptr, 0);
@@ -179,9 +201,11 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		errorCode = avcodec_open2(mVideoCodecContext, mVideoCodec, &autoThread);
 		av_dict_free(&autoThread);
 		if (errorCode < 0) {
-			LOG("Could not open video codec: ", errorCode);
+			LOG("[DecoderFFmpeg] Could not open video codec: ", errorCode);
 			printErrorMsg(errorCode);
 			return false;
+		}else{
+			LOG("[DecoderFFmpeg] Open video codec: ", mVideoCodec->long_name);
 		}
 
 		//	Save the output video format
@@ -236,6 +260,8 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 			LOG("[DecoderFFmpeg] Could not open audio codec(%x). ", errorCode);
 			printErrorMsg(errorCode);
 			return false;
+		} else {
+			LOG("[DecoderFFmpeg] Open audio codec(%x). ", mAudioCodec->long_name);			
 		}
 
 		errorCode = initSwrContext();
