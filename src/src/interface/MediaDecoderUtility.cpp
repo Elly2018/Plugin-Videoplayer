@@ -43,7 +43,7 @@ bool getVideoContext(int32_t id, std::shared_ptr<VideoContext>& videoCtx) {
 		}
 	}
 
-	LOG("[ViveMediaDecoder] Decoder does not exist.");
+	LOG("[MediaDecoderUtility] Decoder does not exist.");
 	return false;
 }
 
@@ -81,7 +81,7 @@ void nativeCleanDestroyedDecoders() {
 }
 
 int32_t nativeCreateDecoderAsync(const char* filePath, int32_t& id) {
-	LOG("[ViveMediaDecoder] Query available decoder id.");
+	LOG("[MediaDecoderUtility] Query available decoder id.");
 
 	int32_t newID = 0;
     std::shared_ptr<VideoContext> videoCtx;
@@ -107,7 +107,7 @@ int32_t nativeCreateDecoderAsync(const char* filePath, int32_t& id) {
 
 //	Synchronized init. Used for thumbnail currently.
 int32_t nativeCreateDecoder(const char* filePath, int32_t& id) {
-	LOG("[ViveMediaDecoder] Query available decoder id.");
+	LOG("[MediaDecoderUtility] Query available decoder id.");
 
 	int32_t newID = 0;
     std::shared_ptr<VideoContext> videoCtx;
@@ -164,14 +164,14 @@ void nativeDestroyDecoder(int32_t id) {
   std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return; }
 
-	LOG("[ViveMediaDecoder] Destroy decoder.");
+	LOG("[MediaDecoderUtility] Destroy decoder.");
 	if (videoCtx->initThread.joinable()) {
 		videoCtx->initThread.join();
 	}
-	LOG("[ViveMediaDecoder] Destroy decoder (After join).");
+	LOG("[MediaDecoderUtility] Destroy decoder (After join).");
 
 	videoCtx->avhandler.reset();
-	LOG("[ViveMediaDecoder] Destroy decoder (After reset).");
+	LOG("[MediaDecoderUtility] Destroy decoder (After reset).");
 
 	videoCtx->path.clear();
 	videoCtx->progressTime = 0.0f;
@@ -180,7 +180,7 @@ void nativeDestroyDecoder(int32_t id) {
 
 	videoCtx->isContentReady = false;
 	removeVideoContext(videoCtx->id);
-	LOG("[ViveMediaDecoder] Destroy decoder (After remove video decoder).");
+	LOG("[MediaDecoderUtility] Destroy decoder (After remove video decoder).");
 	videoCtx->id = -1;
 }
 
@@ -197,12 +197,12 @@ bool nativeIsVideoEnabled(int32_t id) {
 	if (!getVideoContext(id, videoCtx)) { return false; }
 
 	if (videoCtx->avhandler->getDecoderState() < AVDecoderHandler::DecoderState::INITIALIZED) {
-		LOG("[ViveMediaDecoder] Decoder is unavailable currently.");
+		LOG("[MediaDecoderUtility] Decoder is unavailable currently.");
 		return false;
 	}
 
 	bool ret = videoCtx->avhandler->getVideoInfo().isEnabled;
-	LOG("[ViveMediaDecoder] nativeIsVideoEnabled: ", ret ? "true" : "false");
+	LOG("[MediaDecoderUtility] nativeIsVideoEnabled: ", ret ? "true" : "false");
 	return ret;
 }
 
@@ -211,7 +211,7 @@ void nativeGetVideoFormat(int32_t id, int32_t& width, int32_t& height, float& fr
 	if (!getVideoContext(id, videoCtx)) { return; }
 
 	if (videoCtx->avhandler->getDecoderState() < AVDecoderHandler::DecoderState::INITIALIZED) {
-		LOG("[ViveMediaDecoder] Decoder is unavailable currently.");
+		LOG("[MediaDecoderUtility] Decoder is unavailable currently.");
 		return;
 	}
 
@@ -234,12 +234,12 @@ bool nativeIsAudioEnabled(int32_t id) {
 	if (!getVideoContext(id, videoCtx)) { return false; }
 
 	if (videoCtx->avhandler->getDecoderState() < AVDecoderHandler::DecoderState::INITIALIZED) {
-		LOG("[ViveMediaDecoder] Decoder is unavailable currently.");
+		LOG("[MediaDecoderUtility] Decoder is unavailable currently.");
 		return false;
 	}
 
 	bool ret = videoCtx->avhandler->getAudioInfo().isEnabled;
-	LOG("[ViveMediaDecoder] nativeIsAudioEnabled: ", ret ? "true" : "false");
+	LOG("[MediaDecoderUtility] nativeIsAudioEnabled: ", ret ? "true" : "false");
 	return ret;
 }
 
@@ -248,7 +248,7 @@ void nativeGetAudioFormat(int32_t id, int32_t& channel, int32_t& sampleRate, flo
 	if (!getVideoContext(id, videoCtx)) { return; }
 
 	if (videoCtx->avhandler->getDecoderState() < AVDecoderHandler::DecoderState::INITIALIZED) {
-		LOG("[ViveMediaDecoder] Decoder is unavailable currently. ");
+		LOG("[MediaDecoderUtility] Decoder is unavailable currently. ");
 		return;
 	}
 
@@ -271,7 +271,7 @@ double nativeGetAudioData(int32_t id, bool& frameReady, unsigned char** audioDat
     std::shared_ptr<VideoContext> videoCtx;
 	if (!getVideoContext(id, videoCtx)) { return -1.0; }
 	if (videoCtx->audioFrameLocked) {
-		LOG("[ViveMediaDecoder] Release last audio frame first");
+		LOG("[MediaDecoderUtility] Release last audio frame first");
 		return -1.0;
 	}
 
@@ -296,11 +296,11 @@ void nativeSetSeekTime(int32_t id, float sec) {
 	if (!getVideoContext(id, videoCtx)) { return; }
 
 	if (videoCtx->avhandler->getDecoderState() < AVDecoderHandler::DecoderState::INITIALIZED) {
-		LOG("[ViveMediaDecoder] Decoder is unavailable currently. ");
+		LOG("[MediaDecoderUtility] Decoder is unavailable currently. ");
 		return;
 	}
 
-	LOG("[ViveMediaDecoder] nativeSetSeekTime: ", sec);
+	LOG("[MediaDecoderUtility] nativeSetSeekTime: ", sec);
 	videoCtx->avhandler->setSeekTime(sec);
 	if (!videoCtx->avhandler->getVideoInfo().isEnabled) {
 		videoCtx->isContentReady = true;
@@ -404,7 +404,7 @@ double nativeGrabVideoFrame(int32_t id, void** frameData, bool& frameReady, int3
     std::shared_ptr<VideoContext> videoCtx;
     if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { return -1.0; }
     if (videoCtx->videoFrameLocked) {
-        LOG_VERBOSE("[ViveMediaDecoder] Release last video frame first");
+        LOG_VERBOSE("[MediaDecoderUtility] Release last video frame first");
         return -1.0;
     }
 
