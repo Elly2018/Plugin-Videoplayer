@@ -82,7 +82,6 @@ DecoderFFmpeg::~DecoderFFmpeg() {
 	destroy();
 }
 
-
 bool DecoderFFmpeg::init(const char* filePath) {
 	return init(nullptr, filePath);
 }
