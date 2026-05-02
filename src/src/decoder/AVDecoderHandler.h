@@ -51,7 +51,7 @@ public:
 	bool isAudioBufferEmpty();
 	bool isVideoBufferFull();
 
-	int getMetaData(char**& key, char**& value) const;
+	int32_t getMetaData(char**& key, char**& value) const;
 
 private:
 	DecoderState mDecoderState;

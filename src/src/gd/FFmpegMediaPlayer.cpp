@@ -19,7 +19,7 @@ void FFmpegMediaPlayer::_init_media() {
 	if (video_playback) {
 		first_frame_v = true;
 		nativeGetVideoFormat(id, width, height, framerate, video_length);
-		if (!nativeGetOtherStreamIndex(id, AVDecoderHandler::MediaType::VIDEO, li, count, current)) {
+		if (!nativeGetOtherStreamIndex(id, 0, li, count, current)) {
 			LOG_ERROR("[Video Decoder] nativeGetOtherStreamIndex Failed");
 			return;
 		}
@@ -34,7 +34,7 @@ void FFmpegMediaPlayer::_init_media() {
 	if (audio_playback) {
 		first_frame_a = true;
 		nativeGetAudioFormat(id, channels, sampleRate, audio_length);
-		if (!nativeGetOtherStreamIndex(id, AVDecoderHandler::MediaType::AUDIO, li, count, current)) {
+		if (!nativeGetOtherStreamIndex(id, 1, li, count, current)) {
 			LOG_ERROR("[Audio Decoder] nativeGetOtherStreamIndex Failed");
 			return;
 		}

@@ -2,11 +2,7 @@ class_name DemoMediaPlayer extends Node
 
 @export var play_on_start: bool;
 @export var loop: bool;
-<<<<<<< HEAD:example/Godot/Script/DemoMediaPlayer.gd
 @export var uri: String = "/home/funique0807/Videos/test.mp4";
-=======
-@export var uri: String = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
->>>>>>> dev:example/Script/DemoMediaPlayer.gd
 @export var geo: GeometryInstance3D;
 @export var texture_rect: TextureRect;
 
@@ -96,14 +92,8 @@ func stop_trigger():
 	player.stop()
 	
 func load_trigger(p:String):
-<<<<<<< HEAD:example/Godot/Script/DemoMediaPlayer.gd
 	print("Loading: ", p)
 	player.load_path_async(p);
-=======
-	var l = player.load_path(p);
-	print("Loading: ", p, "  ",  l)
-	player.play();
->>>>>>> dev:example/Script/DemoMediaPlayer.gd
 		
 func async_load_finish(result):
 	print("Loading result: ", result)

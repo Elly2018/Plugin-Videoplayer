@@ -20,7 +20,7 @@ void AVDecoderHandler::init(const char* filePath) {
 	}
 }
 
-AVDecoderHandler::DecoderState AVDecoderHandler::getDecoderState() {
+AVDecoderHandler::DecoderState AVDecoderHandler::getDecoderState() const {
 	return mDecoderState;
 }
 
@@ -281,7 +281,7 @@ bool AVDecoderHandler::isVideoBufferFull() {
 	return videoInfo.isEnabled && videoInfo.bufferState == _FULL;
 }
 
-int AVDecoderHandler::getMetaData(char**& key, char**& value) {
+int32_t AVDecoderHandler::getMetaData(char**& key, char**& value) const {
 	if (mIDecoder == nullptr ||mDecoderState <= UNINITIALIZED) {
 		return 0;
 	}
