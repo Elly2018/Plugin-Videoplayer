@@ -15,7 +15,7 @@
 #define strcpy_s(src, size, dest) (strncpy((dest), (src), (size)))
 #endif
 
-typedef struct _VideoContext {
+typedef struct VideoContext {
 	int32_t id = -1;
 	std::string path = "";
 	std::thread initThread;
@@ -26,7 +26,7 @@ typedef struct _VideoContext {
 	float lastUpdateTimeV = -1.0f;
 	float lastUpdateTimeA = -1.0f;
 	float audioBufferTime = -1.0f;
-  bool videoFrameLocked = false;
+    bool videoFrameLocked = false;
 	bool audioFrameLocked = false;
 	bool isContentReady = false;	//	This flag is used to indicate the period that seek over until first data is got.
 									//	Usually used for AV sync problem, in pure audio case, it should be discarded.
