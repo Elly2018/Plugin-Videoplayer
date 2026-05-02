@@ -1,0 +1,152 @@
+#pragma once
+#include <queue>
+#include <mutex>
+#include "IDecoder.h"
+
+extern "C" {
+	#include "libavformat/avformat.h"
+	#include "libavcodec/avcodec.h"
+	#include "libswresample/swresample.h"
+	#include "libswscale/swscale.h"
+	#include <libavutil/fifo.h>
+}
+
+///
+/// FFmpeg decoder class
+///
+class DecoderFFmpeg : public virtual IDecoder
+{
+public:
+	DecoderFFmpeg();
+	virtual ~DecoderFFmpeg();
+
+	bool init(const char* filePath) override;
+	bool init(const char* format, const char* filePath);
+	bool decode() override;
+	bool buffering() override;
+	void seek(double time) override;
+	void destroy() override;
+
+<<<<<<< HEAD:src/src/decoder/DecoderFFmpeg.h
+	VideoInfo getVideoInfo();
+	AudioInfo getAudioInfo();
+	SubtitleInfo getSubtitleInfo();
+	bool isBufferingFinish();
+	void setVideoEnable(bool isEnable);
+	void setAudioEnable(bool isEnable);
+	void setAudioAllChDataEnable(bool isEnable);
+	double getVideoFrame(void** frameData, int32_t&  width, int32_t&  height);
+	double getAudioFrame(unsigned char** outputFrame, int32_t&  frameSize, int32_t&  nb_channel, size_t& byte_per_sample);
+	double getNextVideoFrameTime();
+	double getNextAudioFrameTime();
+	void freeVideoFrame();
+	void freeAudioFrame();
+	void freePreloadFrame();
+	void freeBufferFrame();
+	void print_stream_maps();
+
+	int32_t getMetaData(char**& key, char**& value);
+	int32_t getStreamCount();
+=======
+	VideoInfo getVideoInfo() override;
+	AudioInfo getAudioInfo() override;
+	SubtitleInfo getSubtitleInfo() override;
+	bool isBufferingFinish() override;
+	void setVideoEnable(bool isEnable) override;
+	void setAudioEnable(bool isEnable) override;
+	void setAudioAllChDataEnable(bool isEnable) override;
+	double getVideoFrame(void** frameData) override;
+	double getAudioFrame(unsigned char** outputFrame, int& frameSize, int& nb_channel, size_t& byte_per_sample) override;
+	void freeVideoFrame() override;
+	void freeAudioFrame() override;
+	void print_stream_maps();
+
+	int getMetaData(char**& key, char**& value) override;
+	int getStreamCount();
+>>>>>>> dev:src/src/DecoderFFmpeg.h
+	/**
+	 * 
+	 * Get the type from streams by index.
+	 *
+	 * @return -1: Fail, 0: Video, 1: Audio, 2: Data, 3: Subtitle
+	 * 
+	 */
+	int32_t getStreamType(int32_t index);
+
+
+private:
+	bool mIsInitialized;
+	bool mIsAudioAllChEnabled;
+	bool mUseTCP;				//	For RTSP stream.
+
+	enum AVHWDeviceType type = AVHWDeviceType::AV_HWDEVICE_TYPE_NONE;
+
+	AVFormatContext* mAVFormatContext;
+	AVStream*		mVideoStream;
+	AVStream*		mAudioStream;
+	AVStream*		mSubtitleStream{};
+	const AVCodec*		mVideoCodec;
+	const AVCodec*		mAudioCodec;
+	const AVCodec*		mSubtitleCodec{};
+	AVCodecContext*	mVideoCodecContext;
+	AVCodecContext*	mAudioCodecContext;
+	AVCodecContext*	mSubtitleCodecContext{};
+
+	AVPacket*	mPacket;
+	std::queue<AVFrame*> mVideoFrames;
+	std::queue<AVFrame*> mAudioFrames;
+	std::queue<AVFrame*> mSubtitleFrames;
+<<<<<<< HEAD:src/src/decoder/DecoderFFmpeg.h
+	uint32_t mVideoBuffMax;
+	uint32_t mAudioBuffMax;
+	uint32_t mSubtitleBuffMax;
+
+	std::queue<AVFrame*> mVideoFramesPreload;
+	std::queue<AVFrame*> mAudioFramesPreload;
+	std::queue<AVFrame*> mSubtitleFramesPreload;
+	uint32_t mVideoPreloadMax;
+	uint32_t mAudioPreloadMax;
+	uint32_t mSubtitlePreloadMax;
+=======
+	unsigned int mVideoBuffMax;
+	unsigned int mAudioBuffMax;
+	unsigned int mSubtitleBuffMax{};
+>>>>>>> dev:src/src/DecoderFFmpeg.h
+
+	SwrContext*	mSwrContext;
+	int32_t initSwrContext();
+
+	VideoInfo	mVideoInfo{};
+	AudioInfo	mAudioInfo{};
+	SubtitleInfo	mSubtitleInfo{};
+	void updateBufferState();
+
+<<<<<<< HEAD:src/src/decoder/DecoderFFmpeg.h
+	int32_t mFrameBufferNum;
+=======
+	int mFrameBufferNum{};
+>>>>>>> dev:src/src/DecoderFFmpeg.h
+
+	bool isBuffBlocked();
+	bool isPreloadBlocked();
+	void preloadVideoFrame();
+	void preloadAudioFrame();
+	void preloadSubtitleFrame();
+	void updateVideoFrame();
+	void updateAudioFrame();
+	void updateSubtitleFrame();
+	void freeFrontFrame(std::queue<AVFrame*>* frameBuff, std::mutex* mutex);
+	void freeAllFrame(std::queue<AVFrame*>* frameBuff);
+	void flushBuffer(std::queue<AVFrame*>* frameBuff, std::mutex* mutex);
+	AVCodecContext* getStreamCodecContext(int32_t index);
+	void freeStreamCodecContext(AVCodecContext* codec);
+	void getListType(AVFormatContext* format, std::vector<int>& v, std::vector<int>& a, std::vector<int>& s);
+	std::mutex mPacketMutex;
+	std::mutex mVideoMutex;
+	std::mutex mAudioMutex;
+	std::mutex mSubtitleMutex;
+
+	bool mIsSeekToAny;
+
+	void printErrorMsg(int32_t errorCode);
+};

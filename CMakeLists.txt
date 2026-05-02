@@ -1,6 +1,9 @@
-# SPDX-License-Identifier: Unlicense
+cmake_minimum_required(VERSION 3.14)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_C_STANDARD 17)
 
-cmake_minimum_required( VERSION 3.22 )
 
 if (NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
     if (NOT CMAKE_BUILD_TYPE)
@@ -9,6 +12,16 @@ if (NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
 endif()
 
 message( STATUS "Using CMake ${CMAKE_VERSION}" )
+
+if( "${Engine}" STREQUAL "Godot" )
+	add_compile_definitions(GODOT)
+elseif( "${Engine}" STREQUAL "Unity" )
+	add_compile_definitions(UNITY)
+elseif( "${Engine}" STREQUAL "Unreal" )
+	add_compile_definitions(UNREAL)
+else()
+	add_compile_definitions(NATIVE)
+endif()
 
 # Require out-of-source builds
 file( TO_CMAKE_PATH "${PROJECT_BINARY_DIR}/CMakeLists.txt" LOC_PATH )
@@ -36,6 +49,8 @@ set( CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON )
 # Output compile commands to compile_commands.json (for debugging CMake issues)
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 # Build universal lib on macOS
 # Note that CMAKE_OSX_ARCHITECTURES must be set before project().
 if ( APPLE )
@@ -43,20 +58,38 @@ if ( APPLE )
 endif()
 
 # Main project information
-project( GDExtensionTemplate
-    LANGUAGES
-        CXX
-    VERSION
-        0.1.0
-)
+if( "${Engine}" STREQUAL "Godot" )
+    project( GDExtensionTemplate
+        LANGUAGES
+            CXX
+        VERSION
+            0.1.0
+    )
+elseif( "${Engine}" STREQUAL "Unity" )
+    project( UnityExtensionTemplate
+        LANGUAGES
+            CXX
+        VERSION
+            0.1.0
+    )
+elseif( "${Engine}" STREQUAL "Unreal" )
+    project( UnrealExtensionTemplate
+        LANGUAGES
+            CXX
+        VERSION
+            0.1.0
+    )
+elseif( "${Engine}" STREQUAL "Native" )
+    project( NativeExtensionTemplate
+        LANGUAGES
+            CXX
+        VERSION
+            0.1.0
+    )
+endif()
 
 # Create our library
 add_library( ${PROJECT_NAME} SHARED )
-
-target_compile_features( ${PROJECT_NAME}
-    PRIVATE
-        cxx_std_17
-)
 
 # LIB_ARCH is the architecture being built. It is set to the build system's architecture.
 # For macOS, we build a universal library (both arm64 and x86_64).
@@ -91,7 +124,7 @@ if( NOT DEFINED CMAKE_DEBUG_POSTFIX )
 endif()
 
 # Warnings
-include( CompilerWarnings )
+# include( CompilerWarnings )
 
 # Create and include version info file from git
 include( GitVersionInfo )
@@ -117,17 +150,27 @@ include( ccache )
 # Adds a custom target to format all the code at once
 include( ClangFormat )
 
-set( GODOT_CPP_SYSTEM_HEADERS ON CACHE BOOL "" FORCE )
+# godot-cpp
+if( "${Engine}" STREQUAL "Godot" )
+	# From here: https://github.com/godotengine/godot-cpp
+	if ( NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/godot-cpp/Makefile" )
+		message(
+			FATAL_ERROR
+				"[${PROJECT_NAME}] The godot-cpp submodule was not downloaded. Please update submodules: git submodule update --init --recursive."
+		)
+	endif()
 
-add_subdirectory( godot-cpp )
+	set( GODOT_CPP_SYSTEM_HEADERS ON CACHE BOOL "" FORCE )
 
-set_property(TARGET godot-cpp PROPERTY C_EXTENSIONS ON)
-set_target_properties( godot-cpp
-    PROPERTIES
-        CXX_VISIBILITY_PRESET hidden    # visibility needs to be the same as the main library
-)
+	add_subdirectory( godot-cpp )
 
-target_link_libraries( ${PROJECT_NAME}
-    PRIVATE
-        godot-cpp
-)
+	set_target_properties( godot-cpp
+		PROPERTIES
+			CXX_VISIBILITY_PRESET hidden    # visibility needs to be the same as the main library
+	)
+
+	target_link_libraries( ${PROJECT_NAME}
+		PRIVATE
+			godot-cpp
+	)
+endif()

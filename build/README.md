@@ -9,29 +9,36 @@ Before you start use the scripts, make sure you have below tools installed.
 		- cURL tool
 			- Which for windows you can use powershell (admin) to download: `choco install curl`.
 - MacOS
+  - Currently didn't support yet.
 - Linux
 	- Requirement:
-		- CMake - `sudo apt-get -y install cmake`
-		- Git - `sudo apt-get -y install git`
+		- `sudo apt-get -y install cmake git build-essential`
 
-## OneClick Script
+## For Godot Dev
 
-### [Platform]_pull.submodule
+### Getting started:
+
+Windows, Linux platform build system use Visual Studio 17 2022
+
+If you are using MSYS to build the linux version you can use build/msys_install.sh for install require package
+
+In order to setup the project\
+Check this page for build process
+
+## For Unreal Dev
+
+- WIP...
+
+## For Native Dev
+
+- WIP...
+
+## All Script Description
+
+### [Platform]_[Engine]_all_setup.[sh/bat]
 
 Download the require packages on the internet
 
-### [Platform]_codegen
+### [Platform]_[Engine]_quick_build.[sh/bat]
 
-This will 
-
-## Utility Script
-
-### [Platform]_build_dependencise
-
-- Require environment variable
-	- projectpath - your project path
-
-### [Platform]_build_post
-
-- Require environment variable
-	- projectpath - your project path
+Build the library and copy the files (library and its dependcies) into example folder
