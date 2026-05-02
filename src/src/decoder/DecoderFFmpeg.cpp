@@ -88,15 +88,16 @@ bool DecoderFFmpeg::init(const char* filePath) {
 
 bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 	int32_t st_index[AVMEDIA_TYPE_NB];
+	std::fill(std::begin(st_index), std::end(st_index), -1);
 	static const char* wanted_stream_spec[AVMEDIA_TYPE_NB] = {0};
 
 	if (mIsInitialized) {
-		LOG("Decoder has been init.");
+		LOG("[DecoderFFmpeg] Decoder has been init.");
 		return true;
 	}
 
 	if (filePath == nullptr) {
-		LOG("File path is nullptr.");
+		LOG("[DecoderFFmpeg] File path is nullptr.");
 		return false;
 	}
 
@@ -115,16 +116,13 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 	av_dict_set(&opts, "hwaccel", "auto", 0);
 	av_dict_set(&opts, "movflags", "faststart", 0);
 	av_dict_set(&opts, "refcounted_frames", "1", 0);
+	av_dict_set(&opts, "scan_all_pmts", "1", AV_DICT_DONT_OVERWRITE);
 	if (mUseTCP) {
 		av_dict_set(&opts, "rtsp_transport", "tcp", 0);
 	}
 	
-	if (format == nullptr) {
-		errorCode = avformat_open_input(&mAVFormatContext, filePath, nullptr, &opts);
-	} else {
-		const AVInputFormat* mInputFormat = av_find_input_format(format);
-		errorCode = avformat_open_input(&mAVFormatContext, filePath, mInputFormat, &opts);
-	}
+	const AVInputFormat* mInputFormat = av_find_input_format(format);
+	errorCode = avformat_open_input(&mAVFormatContext, filePath, mInputFormat, &opts);
 
 	/// After we open the input, we can free opts variable
 	av_dict_free(&opts);
@@ -143,6 +141,11 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		return false;
 	}
 
+	if (mAVFormatContext->pb)
+        mAVFormatContext->pb->eof_reached = 0; // FIXME hack, ffplay maybe should not use avio_feof() to test for the end
+
+	av_dump_format(mAVFormatContext, 0, filePath, 0);
+
 	double ctxDuration = (double)(mAVFormatContext->duration) / AV_TIME_BASE;
 #ifdef DECODER_HW
 	type = av_hwdevice_iterate_types(type);
@@ -151,13 +154,17 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 	for (int32_t i = 0; i < mAVFormatContext->nb_streams; i++) {
         AVStream *st = mAVFormatContext->streams[i];
         enum AVMediaType type = st->codecpar->codec_type;
-        st->discard = AVDISCARD_ALL;
+        //st->discard = AVDISCARD_ALL;
         if (type >= 0 && wanted_stream_spec[type] && st_index[type] == -1)
             if (avformat_match_stream_specifier(mAVFormatContext, st, wanted_stream_spec[type]) > 0)
                 st_index[type] = i;
         // Clear all pre-existing metadata update flags to avoid printing
         // initial metadata as update.
         st->event_flags &= ~AVSTREAM_EVENT_FLAG_METADATA_UPDATED;
+		LOG("[DecoderFFmpeg] \tCodec ID: ", st->codecpar->codec_id);
+		LOG("[DecoderFFmpeg] \tStream type: ", type);
+		LOG("[DecoderFFmpeg] \tCh_layout Count: ", st->codecpar->ch_layout.nb_channels);
+		LOG("[DecoderFFmpeg] \tPixel format: ", st->codecpar->format);
     }
 	for (int32_t i = 0; i < AVMEDIA_TYPE_NB; i++) {
         if (wanted_stream_spec[i] && st_index[i] == -1) {
@@ -170,9 +177,16 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 
 	/* Video initialization */
 	LOG("[DecoderFFmpeg] Video initialization  ");
-	st_index[AVMEDIA_TYPE_VIDEO] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_VIDEO, st_index[AVMEDIA_TYPE_VIDEO], -1, nullptr, 0);
+	st_index[AVMEDIA_TYPE_VIDEO] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_VIDEO, st_index[AVMEDIA_TYPE_VIDEO], -1, NULL, 0);
+
+	LOG("[DecoderFFmpeg] Audio initialization ");
+	st_index[AVMEDIA_TYPE_AUDIO] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_AUDIO, st_index[AVMEDIA_TYPE_AUDIO], st_index[AVMEDIA_TYPE_VIDEO], NULL, 0);
+
+	LOG("[DecoderFFmpeg] Subtitle initialization ");
+	st_index[AVMEDIA_TYPE_SUBTITLE] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_SUBTITLE, (st_index[AVMEDIA_TYPE_AUDIO] >= 0 ? st_index[AVMEDIA_TYPE_AUDIO] : st_index[AVMEDIA_TYPE_VIDEO]), st_index[AVMEDIA_TYPE_VIDEO], NULL, 0);
+
 	if (st_index[AVMEDIA_TYPE_VIDEO] < 0) {
-		LOG("[DecoderFFmpeg] video stream not found.");
+		LOG("[DecoderFFmpeg] video stream not found. ", st_index[AVMEDIA_TYPE_VIDEO]);
 		mVideoInfo.isEnabled = false;
 	} else {
 		mVideoInfo.isEnabled = true;
@@ -235,10 +249,8 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 #endif
 
 	/* Audio initialization */
-	LOG("[DecoderFFmpeg] Audio initialization ");
-	st_index[AVMEDIA_TYPE_AUDIO] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_AUDIO, st_index[AVMEDIA_TYPE_AUDIO], st_index[AVMEDIA_TYPE_VIDEO], nullptr, 0);
 	if (st_index[AVMEDIA_TYPE_AUDIO] < 0) {
-		LOG("[DecoderFFmpeg] audio stream not found. ");
+		LOG("[DecoderFFmpeg] audio stream not found. ", st_index[AVMEDIA_TYPE_AUDIO]);
 		mAudioInfo.isEnabled = false;
 	} else {
 		mAudioInfo.isEnabled = true;
@@ -371,7 +383,7 @@ void DecoderFFmpeg::setVideoEnable(bool isEnable) {
 
 void DecoderFFmpeg::setAudioEnable(bool isEnable) {
 	if (mAudioStream == nullptr) {
-		LOG("Audio stream not found. \n");
+		LOG("[DecoderFFmpeg] Audio stream not found. \n");
 		return;
 	}
 

@@ -13,10 +13,10 @@ void AVDecoderHandler::init(const char* filePath) {
 	bool init_r = mIDecoder->init(filePath);
 	if (mIDecoder == nullptr || !init_r) {
 		mDecoderState = INIT_FAIL;
-		LOG("Init result: INIT_FAIL");
+		LOG("[AVDecoderHandler] Init result: INIT_FAIL");
 	} else {
 		mDecoderState = INITIALIZED;
-		LOG("Init result: INITIALIZED");
+		LOG("[AVDecoderHandler] Init result: INITIALIZED");
 	}
 }
 
