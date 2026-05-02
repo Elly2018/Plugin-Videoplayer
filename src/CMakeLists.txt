@@ -3,13 +3,12 @@ file(GLOB_RECURSE CORESRC
 	src/encoder/*.hpp src/encoder/*.h src/encoder/*.cpp src/encoder/*.c
 	src/decoder/*.hpp src/decoder/*.h src/decoder/*.cpp src/decoder/*.c
 	src/interface/*.hpp src/interface/*.h src/interface/*.cpp src/interface/*.c
-	src/DecodeConfig.h)
+	src/DecodeConfig.h src/Logger.h)
 
 file(GLOB_RECURSE GDSRC src/gd/*.hpp src/gd/*.h src/gd/*.cpp src/gd/*.c)
 file(GLOB_RECURSE UnitySRC src/unity/*.hpp src/unity/*.h src/unity/*.cpp src/unity/*.c)
-file(GLOB_RECURSE UnityNativeSRC unity-native/PluginSource/source/*.hpp unity-native/PluginSource/source/*.h unity-native/PluginSource/source/*.cpp unity-native/PluginSource/source/*.c)
-file(GLOB_RECURSE UnrealSRC src/unreal/*.hpp src/unreal/*.h src/unreal/*.cpp src/unreal/*.c)
-file(GLOB_RECURSE NativeSRC src/Logger.h)
+file(GLOB_RECURSE UnrealSRC src/ue/*.hpp src/ue/*.h src/ue/*.cpp src/ue/*.c)
+file(GLOB_RECURSE NativeSRC src/native/*.h src/native/*.hpp src/native/*.cpp src/native/*.c)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 add_compile_options(-Werror)
