@@ -19,6 +19,6 @@ camera_attributes = SubResource("CameraAttributesPractical_3w5hy")
 
 [node name="Sphere" parent="." instance=ExtResource("3_alk7n")]
 play_on_start = true
-uri = "/home/zhuelly/Videos/第六周作業_羽2.mp4"
+uri = "Resource/2d.webm"
 
 [node name="XRPlayUI" parent="." instance=ExtResource("4_bs2wu")]
