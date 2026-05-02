@@ -5,6 +5,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_STANDARD 17)
 
 
+if (NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
+    if (NOT CMAKE_BUILD_TYPE)
+        set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "" FORCE)
+    endif()
+endif()
+
 message( STATUS "Using CMake ${CMAKE_VERSION}" )
 
 if( "${Engine}" STREQUAL "Godot" )
@@ -26,6 +32,16 @@ endif()
 
 # Add paths to modules
 list( APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/" )
+
+# Enable some option for compiler
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+endif()
+
+# Ignore PCL errors in Clang
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-Wno-gnu-anonymous-struct -Wno-nested-anon-types)
+endif()
 
 # Turn on link time optimization for everything
 set( CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON )
@@ -120,12 +136,9 @@ set( INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}/" )
 
 message( STATUS "Install directory: ${INSTALL_DIR}")
 
-install( TARGETS ${PROJECT_NAME}
-    LIBRARY
-        DESTINATION ${INSTALL_DIR}/${LIB_DIR}
-    RUNTIME
-        DESTINATION ${INSTALL_DIR}/${LIB_DIR}
-)
+if(POLICY CMP0177)
+    cmake_policy(SET CMP0177 NEW)
+endif()
 
 add_subdirectory( templates )
 
@@ -137,6 +150,7 @@ include( ccache )
 # Adds a custom target to format all the code at once
 include( ClangFormat )
 
+<<<<<<< HEAD
 # godot-cpp
 if( "${Engine}" STREQUAL "Godot" )
 	# From here: https://github.com/godotengine/godot-cpp
@@ -148,13 +162,24 @@ if( "${Engine}" STREQUAL "Godot" )
 	endif()
 
 	set( GODOT_CPP_SYSTEM_HEADERS ON CACHE BOOL "" FORCE )
+=======
+set( GODOT_CPP_SYSTEM_HEADERS ON CACHE BOOL "" FORCE )
+>>>>>>> dev
 
 	add_subdirectory( godot-cpp )
 
+<<<<<<< HEAD
 	set_target_properties( godot-cpp
 		PROPERTIES
 			CXX_VISIBILITY_PRESET hidden    # visibility needs to be the same as the main library
 	)
+=======
+set_property(TARGET godot-cpp PROPERTY C_EXTENSIONS ON)
+set_target_properties( godot-cpp
+    PROPERTIES
+        CXX_VISIBILITY_PRESET hidden    # visibility needs to be the same as the main library
+)
+>>>>>>> dev
 
 	target_link_libraries( ${PROJECT_NAME}
 		PRIVATE

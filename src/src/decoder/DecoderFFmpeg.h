@@ -18,15 +18,16 @@ class DecoderFFmpeg : public virtual IDecoder
 {
 public:
 	DecoderFFmpeg();
-	~DecoderFFmpeg();
+	virtual ~DecoderFFmpeg();
 
-	bool init(const char* filePath);
+	bool init(const char* filePath) override;
 	bool init(const char* format, const char* filePath);
-	bool decode();
-	bool buffering();
-	void seek(double time);
-	void destroy();
+	bool decode() override;
+	bool buffering() override;
+	void seek(double time) override;
+	void destroy() override;
 
+<<<<<<< HEAD:src/src/decoder/DecoderFFmpeg.h
 	VideoInfo getVideoInfo();
 	AudioInfo getAudioInfo();
 	SubtitleInfo getSubtitleInfo();
@@ -46,6 +47,23 @@ public:
 
 	int32_t getMetaData(char**& key, char**& value);
 	int32_t getStreamCount();
+=======
+	VideoInfo getVideoInfo() override;
+	AudioInfo getAudioInfo() override;
+	SubtitleInfo getSubtitleInfo() override;
+	bool isBufferingFinish() override;
+	void setVideoEnable(bool isEnable) override;
+	void setAudioEnable(bool isEnable) override;
+	void setAudioAllChDataEnable(bool isEnable) override;
+	double getVideoFrame(void** frameData) override;
+	double getAudioFrame(unsigned char** outputFrame, int& frameSize, int& nb_channel, size_t& byte_per_sample) override;
+	void freeVideoFrame() override;
+	void freeAudioFrame() override;
+	void print_stream_maps();
+
+	int getMetaData(char**& key, char**& value) override;
+	int getStreamCount();
+>>>>>>> dev:src/src/DecoderFFmpeg.h
 	/**
 	 * 
 	 * Get the type from streams by index.
@@ -66,18 +84,19 @@ private:
 	AVFormatContext* mAVFormatContext;
 	AVStream*		mVideoStream;
 	AVStream*		mAudioStream;
-	AVStream*		mSubtitleStream;
+	AVStream*		mSubtitleStream{};
 	const AVCodec*		mVideoCodec;
 	const AVCodec*		mAudioCodec;
-	const AVCodec*		mSubtitleCodec;
+	const AVCodec*		mSubtitleCodec{};
 	AVCodecContext*	mVideoCodecContext;
 	AVCodecContext*	mAudioCodecContext;
-	AVCodecContext*	mSubtitleCodecContext;
+	AVCodecContext*	mSubtitleCodecContext{};
 
 	AVPacket*	mPacket;
 	std::queue<AVFrame*> mVideoFrames;
 	std::queue<AVFrame*> mAudioFrames;
 	std::queue<AVFrame*> mSubtitleFrames;
+<<<<<<< HEAD:src/src/decoder/DecoderFFmpeg.h
 	uint32_t mVideoBuffMax;
 	uint32_t mAudioBuffMax;
 	uint32_t mSubtitleBuffMax;
@@ -88,16 +107,25 @@ private:
 	uint32_t mVideoPreloadMax;
 	uint32_t mAudioPreloadMax;
 	uint32_t mSubtitlePreloadMax;
+=======
+	unsigned int mVideoBuffMax;
+	unsigned int mAudioBuffMax;
+	unsigned int mSubtitleBuffMax{};
+>>>>>>> dev:src/src/DecoderFFmpeg.h
 
 	SwrContext*	mSwrContext;
 	int32_t initSwrContext();
 
-	VideoInfo	mVideoInfo;
-	AudioInfo	mAudioInfo;
-	SubtitleInfo	mSubtitleInfo;
+	VideoInfo	mVideoInfo{};
+	AudioInfo	mAudioInfo{};
+	SubtitleInfo	mSubtitleInfo{};
 	void updateBufferState();
 
+<<<<<<< HEAD:src/src/decoder/DecoderFFmpeg.h
 	int32_t mFrameBufferNum;
+=======
+	int mFrameBufferNum{};
+>>>>>>> dev:src/src/DecoderFFmpeg.h
 
 	bool isBuffBlocked();
 	bool isPreloadBlocked();

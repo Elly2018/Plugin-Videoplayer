@@ -1,10 +1,15 @@
 # Objects.
 .scons-cache/
 *.os
+<<<<<<< HEAD
 *.vs
 
 # Solutions
 NativeExtensionTemplate-build/
+=======
+CMakeFiles/
+GDExtensionTemplate/
+>>>>>>> dev
 GDExtensionTemplate-build/
 UnityExtensionTemplate-build/
 UnrealExtensionTemplate-build/
@@ -16,6 +21,11 @@ src/ffmpeg*/
 example/Godot/addons/videoplayer/lib/Linux-AMD64/*.so
 example/Godot/addons/videoplayer/lib/Windows-AMD64/*.dll
 
+src/lib/ffmpeg.zip
+src/lib/ffmpeg.tar.xz
+src/lib/ffmpeg-linux64/
+src/lib/ffmpeg-win64/
+
 # SConstruct
 .sconf_temp
 .sconsign.dblite
@@ -24,16 +34,32 @@ example/Godot/addons/videoplayer/lib/Windows-AMD64/*.dll
 # MacOS
 .DS_Store
 
+vs/
 x64/
 bin/
 libs/
 VideoPlayer.dir/
+<<<<<<< HEAD
 
 # Extension
 src/unity-native/
 FFmpeg/
 godot-cpp/
+=======
+gen/
+.cmake
+.ninja_deps
+.ninja_lock
+.ninja_log
+cmake_install.cmake
+CMakeCache.txt
+compile_commands.json
+Makefile
+example/addons/videoplayer/lib/Dep/**.dll
+example/addons/videoplayer/lib/Dep/**.so
+>>>>>>> dev
 
 # Editors
 .vscode/
+.idea
 /SDL-main

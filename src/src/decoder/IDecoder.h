@@ -1,11 +1,14 @@
 #pragma once
 #include <cstddef>
+<<<<<<< HEAD:src/src/decoder/IDecoder.h
 #include <cinttypes>
+=======
+>>>>>>> dev:src/src/IDecoder.h
 
 class IDecoder
 {
 public:
-	virtual ~IDecoder() {}
+	virtual ~IDecoder() = default;
 
 	enum BufferState {EMPTY, NORMAL, FULL};
 
@@ -47,14 +50,24 @@ public:
 	virtual void setVideoEnable(bool isEnable) = 0;
 	virtual void setAudioEnable(bool isEnable) = 0;
 	virtual void setAudioAllChDataEnable(bool isEnable) = 0;
+<<<<<<< HEAD:src/src/decoder/IDecoder.h
 	virtual double getVideoFrame(void** frameData, int& width, int& height) = 0;
 	virtual double getNextVideoFrameTime() = 0;
 	virtual double getAudioFrame(unsigned char** outputFrame, int& frameSize, int& nb_channel, size_t& byte_per_sample) = 0;
 	virtual double getNextAudioFrameTime() = 0;
+=======
+	virtual double getVideoFrame(void** frameData) = 0;
+	virtual double getAudioFrame(unsigned char** outputFrame, int& frameSize, int& nb_channel, std::size_t& byte_per_sample) = 0;
+>>>>>>> dev:src/src/IDecoder.h
 	virtual void freeVideoFrame() = 0;
 	virtual void freeAudioFrame() = 0;
 	virtual void freePreloadFrame() = 0;
 	virtual void freeBufferFrame() = 0;
 
+<<<<<<< HEAD:src/src/decoder/IDecoder.h
 	virtual int32_t getMetaData(char**& key, char**& value) = 0;
 };
+=======
+	virtual int getMetaData(char**& key, char**& value) = 0;
+};
+>>>>>>> dev:src/src/IDecoder.h
