@@ -17,7 +17,8 @@ environment = SubResource("Environment_24h51")
 camera_attributes = SubResource("CameraAttributesPractical_3w5hy")
 
 [node name="Plane" parent="." instance=ExtResource("4_7ran5")]
-uri = "/home/funique0807/Videos/test.mp4"
+play_on_start = true
+uri = "/home/funique0807/Videos/第六周作業_羽2.mp4"
 
 [node name="2DPlayer" parent="." instance=ExtResource("2_74c40")]
 

@@ -12,7 +12,7 @@ config_version=5
 
 config/name="VideoPlayer"
 config/tags=PackedStringArray("audio", "video")
-run/main_scene="res://Scene/DemoScene.tscn"
+run/main_scene="res://Scene/XRDemoScene.tscn"
 config/features=PackedStringArray("4.1", "GL Compatibility")
 run/max_fps=60
 config/icon="res://icon.svg"

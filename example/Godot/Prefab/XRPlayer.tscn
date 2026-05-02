@@ -1,11 +1,14 @@
-[gd_scene load_steps=2 format=3 uid="uid://nepgy2yvue6r"]
+[gd_scene load_steps=3 format=3 uid="uid://nepgy2yvue6r"]
 
 [ext_resource type="Script" path="res://Script/MouseController.gd" id="1_t31re"]
+[ext_resource type="Environment" uid="uid://co4hk2iqv5oxv" path="res://Environment/DemoScene.tres" id="2_heyka"]
 
-[node name="Player" type="Node3D"]
+[node name="Player" type="Node3D" node_paths=PackedStringArray("camera")]
 script = ExtResource("1_t31re")
+camera = NodePath("XROrigin3D/XRCamera3D")
 
 [node name="XROrigin3D" type="XROrigin3D" parent="."]
 current = true
 
 [node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D"]
+environment = ExtResource("2_heyka")

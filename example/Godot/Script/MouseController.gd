@@ -1,6 +1,7 @@
 extends Node3D
 
 @export var sensitivity:float = 1.0;
+@export var camera:Camera3D = null
 var pos: Vector2;
 var delta: Vector2;
 var view: bool = false;
@@ -28,3 +29,8 @@ func _input(event):
 			elif (event.is_pressed()):
 				view = true;
 				reset = true;
+		if (camera != null):
+			if (event.button_index == MOUSE_BUTTON_WHEEL_UP && camera.fov < 170):
+				camera.fov += 1
+			if (event.button_index == MOUSE_BUTTON_WHEEL_DOWN && camera.fov > 10):
+				camera.fov -= 1

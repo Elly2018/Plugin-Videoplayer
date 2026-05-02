@@ -8,6 +8,9 @@ colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_ot31o"]
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_hv1hq"]
+generate_mipmaps = false
+seamless = true
+normalize = false
 color_ramp = SubResource("Gradient_6eiqs")
 noise = SubResource("FastNoiseLite_ot31o")
 
