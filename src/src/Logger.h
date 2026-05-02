@@ -1,21 +1,31 @@
 //========= Copyright 2015-2019, HTC Corporation. All rights reserved. ===========
 
 #pragma once
-#include <godot_cpp/variant/utility_functions.hpp>
+#include <string>
 #include <functional>
 
-using namespace godot;
+#define BASE_LOG(X, ...) (std::string("[EllyVideoPlayer_Native]") + std::string(X) + std::string("\n")).c_str() , __VA_ARGS__
 
 #define ENABLE_LOG
 #define ENABLE_LOG_VERBOSE
 
 #ifdef ENABLE_LOG
-#define LOG(...) godot::UtilityFunctions::print( __VA_ARGS__ )
-#define LOG_ERROR(...) godot::UtilityFunctions::printerr( __VA_ARGS__ )
+	#define LOG(X, ...) std::fprintf(stdout, BASE_LOG(X, __VA_ARGS__))
+	#define LOG_ERROR(X, ...) std::fprintf(stderr, BASE_LOG(X, __VA_ARGS__))
 #ifdef ENABLE_LOG_VERBOSE
-#define LOG_VERBOSE(...) godot::UtilityFunctions::print( __VA_ARGS__ )
-#define LOG_ERROR_VERBOSE(...) godot::UtilityFunctions::printerr( __VA_ARGS__ )
+	#define LOG_VERBOSE(X, ...) std::fprintf(stdout, BASE_LOG(X, __VA_ARGS__))
+	#define LOG_ERROR_VERBOSE(X, ...) std::fprintf(stderr, BASE_LOG(X, __VA_ARGS__))
 #else
+<<<<<<< HEAD
+	#define LOG_VERBOSE(X, ...)
+	#define LOG_ERROR_VERBOSE(X, ...)
+#endif
+#else
+	#define LOG(X, ...)
+	#define LOG_ERROR(X, ...)
+	#define LOG_VERBOSE(X, ...)
+	#define LOG_ERROR_VERBOSE(X, ...)
+=======
 #define LOG_VERBOSE(...)
 #define LOG_ERROR_VERBOSE(...)
 #endif
@@ -24,4 +34,5 @@ using namespace godot;
 #define LOG_ERROR(...)
 #define LOG_VERBOSE(...)
 #define LOG_ERROR_VERBOSE(...)
+>>>>>>> dev
 #endif

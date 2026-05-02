@@ -1,0 +1,33 @@
+[configuration]
+
+entry_symbol = "gdextension_init"
+compatibility_minimum = 4.1.4
+
+[dependencies]
+
+windows.x86_64 = {
+"lib/Windows-AMD64/avcodec-60.dll":".",
+"lib/Windows-AMD64/avdevice-60.dll":".",
+"lib/Windows-AMD64/avfilter-9.dll":".",
+"lib/Windows-AMD64/avformat-60.dll":".",
+"lib/Windows-AMD64/avutil-58.dll":".",
+"lib/Windows-AMD64/postproc-57.dll":".",
+"lib/Windows-AMD64/swresample-4.dll":".",
+"lib/Windows-AMD64/swscale-7.dll":".",
+"lib/Windows-AMD64/libyuv.dll":"."
+}
+Linux-AMD64 = {
+"lib/Linux-AMD64/libavcodec.so":".",
+"lib/Linux-AMD64/libavdevice.so":".",
+"lib/Linux-AMD64/libavfilter.so":".",
+"lib/Linux-AMD64/libavformat.so":".",
+"lib/Linux-AMD64/libavutil.so":".",
+"lib/Linux-AMD64/libswresample.so":".",
+"lib/Linux-AMD64/libswscale.so":"."
+}
+
+[libraries]
+
+windows.x86_64 = "lib/Windows-AMD64/gd_videoplayer-d.dll"
+linux.x86_64 = "lib/Linux-AMD64/libgd_videoplayer-d.so"
+

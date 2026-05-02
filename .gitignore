@@ -1,9 +1,20 @@
 # Objects.
 .scons-cache/
 *.os
-CMakeFiles/
-GDExtensionTemplate/
+*.vs
+
+# Solutions
+NativeExtensionTemplate-build/
 GDExtensionTemplate-build/
+UnityExtensionTemplate-build/
+UnrealExtensionTemplate-build/
+
+build_godot_linux_amd64/
+reference
+src/ffmpeg/
+src/ffmpeg*/
+example/Godot/addons/videoplayer/lib/Linux-AMD64/*.so
+example/Godot/addons/videoplayer/lib/Windows-AMD64/*.dll
 
 src/lib/ffmpeg.zip
 src/lib/ffmpeg.tar.xz
@@ -21,18 +32,13 @@ src/lib/ffmpeg-win64/
 vs/
 x64/
 bin/
+libs/
 VideoPlayer.dir/
-gen/
-.cmake
-.ninja_deps
-.ninja_lock
-.ninja_log
-cmake_install.cmake
-CMakeCache.txt
-compile_commands.json
-Makefile
-example/addons/videoplayer/lib/Dep/**.dll
-example/addons/videoplayer/lib/Dep/**.so
+
+# Extension
+src/unity-native/
+FFmpeg/
+godot-cpp/
 
 # Editors
 .vscode/
