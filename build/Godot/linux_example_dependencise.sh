@@ -1,7 +1,10 @@
 #!/bin/bash
-projectpath=example/Godot/addons/videoplayer/lib/Linux-AMD64
+projectpath=./example/Godot/addons/videoplayer/lib/Linux-AMD64
 
 cd ../..
+
+mkdir -p $projectpath
+
 cp -f "src/ffmpeg/lib/libavcodec.so" $projectpath
 cp -f "src/ffmpeg/lib/libavdevice.so" $projectpath
 cp -f "src/ffmpeg/lib/libavfilter.so" $projectpath
