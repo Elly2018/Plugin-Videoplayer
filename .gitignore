@@ -1,15 +1,10 @@
 # Objects.
 .scons-cache/
 *.os
-<<<<<<< HEAD
 *.vs
 
 # Solutions
 NativeExtensionTemplate-build/
-=======
-CMakeFiles/
-GDExtensionTemplate/
->>>>>>> dev
 GDExtensionTemplate-build/
 UnityExtensionTemplate-build/
 UnrealExtensionTemplate-build/
@@ -39,25 +34,11 @@ x64/
 bin/
 libs/
 VideoPlayer.dir/
-<<<<<<< HEAD
 
 # Extension
 src/unity-native/
 FFmpeg/
 godot-cpp/
-=======
-gen/
-.cmake
-.ninja_deps
-.ninja_lock
-.ninja_log
-cmake_install.cmake
-CMakeCache.txt
-compile_commands.json
-Makefile
-example/addons/videoplayer/lib/Dep/**.dll
-example/addons/videoplayer/lib/Dep/**.so
->>>>>>> dev
 
 # Editors
 .vscode/

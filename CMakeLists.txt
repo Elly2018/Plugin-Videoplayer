@@ -150,7 +150,6 @@ include( ccache )
 # Adds a custom target to format all the code at once
 include( ClangFormat )
 
-<<<<<<< HEAD
 # godot-cpp
 if( "${Engine}" STREQUAL "Godot" )
 	# From here: https://github.com/godotengine/godot-cpp
@@ -162,24 +161,13 @@ if( "${Engine}" STREQUAL "Godot" )
 	endif()
 
 	set( GODOT_CPP_SYSTEM_HEADERS ON CACHE BOOL "" FORCE )
-=======
-set( GODOT_CPP_SYSTEM_HEADERS ON CACHE BOOL "" FORCE )
->>>>>>> dev
 
 	add_subdirectory( godot-cpp )
 
-<<<<<<< HEAD
 	set_target_properties( godot-cpp
 		PROPERTIES
 			CXX_VISIBILITY_PRESET hidden    # visibility needs to be the same as the main library
 	)
-=======
-set_property(TARGET godot-cpp PROPERTY C_EXTENSIONS ON)
-set_target_properties( godot-cpp
-    PROPERTIES
-        CXX_VISIBILITY_PRESET hidden    # visibility needs to be the same as the main library
-)
->>>>>>> dev
 
 	target_link_libraries( ${PROJECT_NAME}
 		PRIVATE
