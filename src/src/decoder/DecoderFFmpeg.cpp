@@ -475,7 +475,7 @@ double DecoderFFmpeg::getAudioFrame(unsigned char** outputFrame, int32_t& frameS
 	nb_channel = frame->ch_layout.nb_channels;
 	frameSize = frame->nb_samples;
 	*outputFrame = frame->data[0];
-	byte_per_sample = (size_t)av_get_bytes_per_sample(mAudioCodecContext->sample_fmt);
+	byte_per_sample = (size_t)av_get_bytes_per_sample(AV_SAMPLE_FMT_FLT);
 	int64_t timeStamp = frame->pts;
 	double timeInSec = av_q2d(mAudioStream->time_base) * timeStamp;
 	mAudioInfo.lastTime = timeInSec;
@@ -645,7 +645,7 @@ bool DecoderFFmpeg::isPreloadBlocked() {
 		ret = true;
 	}
 
-	if (mAudioInfo.isEnabled && mVideoFramesPreload.size() >= mAudioPreloadMax) {
+	if (mAudioInfo.isEnabled && mAudioFramesPreload.size() >= mAudioPreloadMax) {
 		ret = true;
 	}
 
