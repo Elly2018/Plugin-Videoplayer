@@ -9,7 +9,7 @@ GDExtensionTemplate-build/
 UnityExtensionTemplate-build/
 UnrealExtensionTemplate-build/
 
-build_godot_*_*/
+build_**/
 reference
 src/ffmpeg/
 src/ffmpeg*/
