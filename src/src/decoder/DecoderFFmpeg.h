@@ -27,7 +27,6 @@ public:
 	void seek(double time) override;
 	void destroy() override;
 
-<<<<<<< HEAD:src/src/decoder/DecoderFFmpeg.h
 	VideoInfo getVideoInfo();
 	AudioInfo getAudioInfo();
 	SubtitleInfo getSubtitleInfo();
@@ -47,23 +46,6 @@ public:
 
 	int32_t getMetaData(char**& key, char**& value);
 	int32_t getStreamCount();
-=======
-	VideoInfo getVideoInfo() override;
-	AudioInfo getAudioInfo() override;
-	SubtitleInfo getSubtitleInfo() override;
-	bool isBufferingFinish() override;
-	void setVideoEnable(bool isEnable) override;
-	void setAudioEnable(bool isEnable) override;
-	void setAudioAllChDataEnable(bool isEnable) override;
-	double getVideoFrame(void** frameData) override;
-	double getAudioFrame(unsigned char** outputFrame, int& frameSize, int& nb_channel, size_t& byte_per_sample) override;
-	void freeVideoFrame() override;
-	void freeAudioFrame() override;
-	void print_stream_maps();
-
-	int getMetaData(char**& key, char**& value) override;
-	int getStreamCount();
->>>>>>> dev:src/src/DecoderFFmpeg.h
 	/**
 	 * 
 	 * Get the type from streams by index.
@@ -96,7 +78,6 @@ private:
 	std::queue<AVFrame*> mVideoFrames;
 	std::queue<AVFrame*> mAudioFrames;
 	std::queue<AVFrame*> mSubtitleFrames;
-<<<<<<< HEAD:src/src/decoder/DecoderFFmpeg.h
 	uint32_t mVideoBuffMax;
 	uint32_t mAudioBuffMax;
 	uint32_t mSubtitleBuffMax;
@@ -107,11 +88,6 @@ private:
 	uint32_t mVideoPreloadMax;
 	uint32_t mAudioPreloadMax;
 	uint32_t mSubtitlePreloadMax;
-=======
-	unsigned int mVideoBuffMax;
-	unsigned int mAudioBuffMax;
-	unsigned int mSubtitleBuffMax{};
->>>>>>> dev:src/src/DecoderFFmpeg.h
 
 	SwrContext*	mSwrContext;
 	int32_t initSwrContext();
@@ -121,11 +97,7 @@ private:
 	SubtitleInfo	mSubtitleInfo{};
 	void updateBufferState();
 
-<<<<<<< HEAD:src/src/decoder/DecoderFFmpeg.h
 	int32_t mFrameBufferNum;
-=======
-	int mFrameBufferNum{};
->>>>>>> dev:src/src/DecoderFFmpeg.h
 
 	bool isBuffBlocked();
 	bool isPreloadBlocked();

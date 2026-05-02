@@ -9,13 +9,6 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-<<<<<<< HEAD:src/src/gd/FFmpegMediaPlayer.cpp
-=======
-#include "AVDecoderHandler.h"
-
-using namespace godot;
-
->>>>>>> dev:src/src/FFmpegMediaPlayer.cpp
 void FFmpegMediaPlayer::_init_media() {
 	int32_t li = -1;
 	int32_t count = 0;
@@ -86,13 +79,8 @@ void FFmpegMediaPlayer::load_async()
 	load_path_async(path);
 }
 
-<<<<<<< HEAD:src/src/gd/FFmpegMediaPlayer.cpp
 bool FFmpegMediaPlayer::load_path(String _path) {
 	LOG("start load path: ", _path);
-=======
-bool FFmpegMediaPlayer::load_path(const String &p_path) {
-	LOG("start load path: ", p_path);
->>>>>>> dev:src/src/FFmpegMediaPlayer.cpp
 	if (player == nullptr) {
 		LOG_ERROR("You must register the player instance first");
 		return false;
@@ -105,11 +93,7 @@ bool FFmpegMediaPlayer::load_path(const String &p_path) {
 		return false;
 	}
 
-<<<<<<< HEAD:src/src/gd/FFmpegMediaPlayer.cpp
 	CharString utf8 = _path.utf8();
-=======
-	CharString utf8 = p_path.utf8();
->>>>>>> dev:src/src/FFmpegMediaPlayer.cpp
 	const char *cstr = utf8.get_data();
 
 	nativeCreateDecoder(cstr, id);
@@ -126,25 +110,15 @@ bool FFmpegMediaPlayer::load_path(const String &p_path) {
 	return is_loaded;
 }
 
-<<<<<<< HEAD:src/src/gd/FFmpegMediaPlayer.cpp
 void FFmpegMediaPlayer::load_path_async(String _path) {
 	LOG("[FFmpegMediaPlayer] start load path: ", _path);
 	int32_t d_state = nativeGetDecoderState(id);
-=======
-void FFmpegMediaPlayer::load_path_async(const String &p_path) {
-	LOG("start load path: ", p_path);
-	int d_state = nativeGetDecoderState(id);
->>>>>>> dev:src/src/FFmpegMediaPlayer.cpp
 	if (d_state > 1) {
 		LOG_ERROR("Decoder state: ", d_state);
 		return;
 	}
 
-<<<<<<< HEAD:src/src/gd/FFmpegMediaPlayer.cpp
 	CharString utf8 = _path.utf8();
-=======
-	CharString utf8 = p_path.utf8();
->>>>>>> dev:src/src/FFmpegMediaPlayer.cpp
 	const char *cstr = utf8.get_data();
 
 	LOG("[FFmpegMediaPlayer] State change to LOADING");
@@ -368,7 +342,6 @@ void FFmpegMediaPlayer::_physics_process(float delta) {
 			video_current_time = frameTime;
 			nativeSetVideoTime(id, video_current_time);
 		}
-<<<<<<< HEAD:src/src/gd/FFmpegMediaPlayer.cpp
 		if (ready) {
 			PackedFloat32Array audio_data = PackedFloat32Array();
 			audio_data.resize(audio_size * byte_per_sample * channel);
@@ -376,17 +349,6 @@ void FFmpegMediaPlayer::_physics_process(float delta) {
 			emit_signal("audio_update", audio_data, audio_size, channel);
 			//LOG("Audio info, sample size: %d, channel: %d, byte per sample: %d \n", audio_size, channel, byte_per_sample);
 			float s = 0;
-=======
-		else {			
-			//LOG("get_frames_available: %d \n", c);
-			if (audio_time != -1.0f) {
-				PackedFloat32Array audio_data = PackedFloat32Array();
-				audio_data.resize(audio_size * byte_per_sample * channel);
-				memcpy(audio_data.ptrw(), raw_audio_data, audio_size * channel * byte_per_sample);
-				emit_signal("audio_update", audio_data, audio_size, channel);
-				LOG_VERBOSE("Audio info, sample size: %d, channel: %d, byte per sample: %d \n", audio_size, channel, byte_per_sample);
-				float s = 0;
->>>>>>> dev:src/src/FFmpegMediaPlayer.cpp
 
 			first_frame_a = false;
 
@@ -451,32 +413,19 @@ AudioStreamPlayer* FFmpegMediaPlayer::get_player() const
 	return player;
 }
 
-<<<<<<< HEAD:src/src/gd/FFmpegMediaPlayer.cpp
 void FFmpegMediaPlayer::set_sample_rate(const int32_t rate)
 {
 	if (generator == nullptr) return;
 	generator->set_mix_rate(rate);
-=======
-void FFmpegMediaPlayer::set_sample_rate(const int rate) const
-{
-	generator->set_mix_rate(static_cast<float>(rate));
->>>>>>> dev:src/src/FFmpegMediaPlayer.cpp
 }
 
 int32_t FFmpegMediaPlayer::get_sample_rate() const
 {
-<<<<<<< HEAD:src/src/gd/FFmpegMediaPlayer.cpp
 	if (generator == nullptr) return -1;
 	return generator->get_mix_rate();
 }
 
 void FFmpegMediaPlayer::set_buffer_length(const double second)
-=======
-	return static_cast<int>(generator->get_mix_rate());
-}
-
-void FFmpegMediaPlayer::set_buffer_length(const float second) const
->>>>>>> dev:src/src/FFmpegMediaPlayer.cpp
 {
 	if (generator == nullptr) return;
 	generator->set_buffer_length(second);

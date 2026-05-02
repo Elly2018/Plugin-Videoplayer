@@ -2,12 +2,8 @@
 #include <thread>
 #include <mutex>
 #include <memory>
-<<<<<<< HEAD:src/src/decoder/AVDecoderHandler.h
 #include "IDecoder.h"
- 
-=======
 
->>>>>>> dev:src/src/AVDecoderHandler.h
 class AVDecoderHandler {
 public:
 	AVDecoderHandler();
@@ -30,7 +26,6 @@ public:
 
     void stop();
 
-<<<<<<< HEAD:src/src/decoder/AVDecoderHandler.h
     bool isDecoderRunning() const;
     bool isPreloadRunning() const;
 
@@ -55,26 +50,6 @@ public:
 	bool isVideoBufferEmpty();
 	bool isAudioBufferEmpty();
 	bool isVideoBufferFull();
-=======
-    [[nodiscard]] bool isDecoderRunning() const;
-
-	void setSeekTime(float sec);
-	
-	double getVideoFrame(void** frameData) const;
-	double getAudioFrame(uint8_t** outputFrame, int& frameSize, int& nb_channel, size_t& byte_per_sample) const;
-	bool getOtherIndex(MediaType type, const int* li, int& count, int& current) const;
-	void freeVideoFrame() const;
-	void freeAudioFrame() const;
-	void setVideoEnable(bool isEnable) const;
-	void setAudioEnable(bool isEnable) const;
-	void setAudioAllChDataEnable(bool isEnable) const;
-
-	[[nodiscard]] IDecoder::VideoInfo getVideoInfo() const;
-	[[nodiscard]] IDecoder::AudioInfo getAudioInfo() const;
-	[[nodiscard]] IDecoder::SubtitleInfo getSubtitleInfo() const;
-	[[nodiscard]] bool isVideoBufferEmpty() const;
-	[[nodiscard]] bool isVideoBufferFull() const;
->>>>>>> dev:src/src/AVDecoderHandler.h
 
 	int getMetaData(char**& key, char**& value) const;
 
@@ -86,10 +61,6 @@ private:
 	
 	std::thread mDecodeThread;
 	std::thread mBufferThread;
-<<<<<<< HEAD:src/src/decoder/AVDecoderHandler.h
     bool mDecodeThreadRunning = false;
-=======
-	bool mDecodeThreadRunning = false;
->>>>>>> dev:src/src/AVDecoderHandler.h
 	bool mBufferThreadRunning = false;
 };

@@ -16,7 +16,6 @@
 	#define LOG_VERBOSE(X, ...) std::fprintf(stdout, BASE_LOG(X, __VA_ARGS__))
 	#define LOG_ERROR_VERBOSE(X, ...) std::fprintf(stderr, BASE_LOG(X, __VA_ARGS__))
 #else
-<<<<<<< HEAD
 	#define LOG_VERBOSE(X, ...)
 	#define LOG_ERROR_VERBOSE(X, ...)
 #endif
@@ -25,14 +24,4 @@
 	#define LOG_ERROR(X, ...)
 	#define LOG_VERBOSE(X, ...)
 	#define LOG_ERROR_VERBOSE(X, ...)
-=======
-#define LOG_VERBOSE(...)
-#define LOG_ERROR_VERBOSE(...)
-#endif
-#else
-#define LOG(...)
-#define LOG_ERROR(...)
-#define LOG_VERBOSE(...)
-#define LOG_ERROR_VERBOSE(...)
->>>>>>> dev
 #endif
