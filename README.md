@@ -4,12 +4,15 @@ A general video player for godot 4.x, unity, unreal to play video, this is a wra
 
 Below example use godot engine import gdextension for video player
 
+[Wiki](https://github.com/Elly2018/Plugin-Videoplayer/wiki)
+[Plan](https://github.com/users/Elly2018/projects/12)
+
 ![v8](img/v8.gif)
 
 |![v5](img/v5.PNG)|![v6](img/v6.PNG)|![v7](img/v7.PNG)|
 |-|-|-|
 
-The above demo use URL are all in the example project player file [link](https://github.com/Elly2018/gd_videoplayer/blob/main/example/Script/DemoMediaPlayer.gd)\
+The above demo use URL are all in the godot 2D example project player file [link](https://github.com/Elly2018/gd_videoplayer/blob/main/example/Script/DemoMediaPlayer.gd)\
 And apply to VR sphere mesh and a viewport texture in front of player
 
 ### Repository structure:
@@ -33,6 +36,13 @@ And apply to VR sphere mesh and a viewport texture in front of player
 
 - HLS will stuck at buffering sometimes
 - hardware acceleration not include
+
+### Supported engine
+
+- [x] Godot 4.1+
+- [ ] Unity
+- [ ] Unreal
+- [ ] Native
 
 ### Supported platfrom
 | Platform | Video | Audio | XR Support |
