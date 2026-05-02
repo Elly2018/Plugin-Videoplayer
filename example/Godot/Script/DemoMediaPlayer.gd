@@ -22,9 +22,9 @@ extends Node
 # https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4
 # Bitbop ball for sync test
 # http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8
-var mat: Material
-var aspect: float
-var rootInterface:Control
+var mat: Material = null
+var aspect: float = 1.0
+var rootInterface:Control = null
 var phase = 0.0
 
 var current_size: Vector2i = Vector2i(1, 1)
@@ -44,20 +44,22 @@ func _process(delta):
 
 func _update_size():
 	aspect = float(current_size.x) / float(current_size.y);
-	var root_size = rootInterface.get_rect().size
-	var root_aspect = root_size.x / root_size.y
-	if current_size == Vector2i(1, 1):
-		texture_rect.size = Vector2(root_size.x, root_size.y)
-		texture_rect.position = Vector2(0,0)
-		return	
-	if root_aspect > aspect:
-		# Fit height
-		texture_rect.size = Vector2(root_size.y * aspect, root_size.y)
-		texture_rect.position = Vector2((root_size.x - (root_size.y * aspect)) / 2.0, 0.0)
-	else:
-		# Fit width
-		texture_rect.size = Vector2(root_size.x, root_size.x / aspect)
-		texture_rect.position = Vector2(0.0, (root_size.y - (root_size.x / aspect)) / 2.0)
+	if (rootInterface != null):
+		var root_size = rootInterface.get_rect().size
+		var root_aspect = root_size.x / root_size.y
+		if (texture_rect != null):
+			if current_size == Vector2i(1, 1):
+				texture_rect.size = Vector2(root_size.x, root_size.y)
+				texture_rect.position = Vector2(0,0)
+				return	
+			if root_aspect > aspect:
+				# Fit height
+				texture_rect.size = Vector2(root_size.y * aspect, root_size.y)
+				texture_rect.position = Vector2((root_size.x - (root_size.y * aspect)) / 2.0, 0.0)
+			else:
+				# Fit width
+				texture_rect.size = Vector2(root_size.x, root_size.x / aspect)
+				texture_rect.position = Vector2(0.0, (root_size.y - (root_size.x / aspect)) / 2.0)
 
 func texture_update(tex:Texture2D, size:Vector2i):
 	current_size = size;

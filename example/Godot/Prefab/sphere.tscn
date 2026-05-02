@@ -15,11 +15,10 @@ buffer_length = 0.2
 [node name="Sphere" type="Node3D" node_paths=PackedStringArray("geo", "player", "audio_stream")]
 transform = Transform3D(20, 0, 0, 0, 20, 0, 0, 0, 20, 0.203564, -0.109128, 0.122446)
 script = ExtResource("1_lg4ib")
-play_on_start = true
 loop = true
-geo = NodePath("")
-player = NodePath("")
-audio_stream = NodePath("")
+geo = NodePath("MeshInstance3D")
+player = NodePath("FFmpegMediaPlayer")
+audio_stream = NodePath("Player")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0)
@@ -33,3 +32,5 @@ stream = SubResource("AudioStreamGenerator_cr308")
 autoplay = true
 
 [node name="FFmpegMediaPlayer" type="FFmpegMediaPlayer" parent="."]
+
+[connection signal="video_update" from="FFmpegMediaPlayer" to="." method="texture_update"]

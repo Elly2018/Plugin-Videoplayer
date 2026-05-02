@@ -153,9 +153,21 @@ public:
 	/// Get audio sample rate
 	///
 	int32_t get_sample_rate() const;
+	///
+	/// Set godot audio buffer length
+	///
 	void set_buffer_length(const double second);
+	///
+	/// Get godot audio buffer length
+	///
 	double get_buffer_length() const;
+	///
+	/// Set the private path variable
+	///
 	void set_path(const String _path);
+	///
+	/// Get the private path variable
+	///
 	String get_path() const;
 	void set_format(const String _format);
 	String get_format() const;
