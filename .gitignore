@@ -20,6 +20,7 @@ src/lib/ffmpeg.zip
 src/lib/ffmpeg.tar.xz
 src/lib/ffmpeg-linux64/
 src/lib/ffmpeg-win64/
+src/platform.txt
 
 # SConstruct
 .sconf_temp

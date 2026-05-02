@@ -6,4 +6,3 @@ curl --output ffmpeg.zip --ssl-no-revoke -L -O https://github.com/BtbN/FFmpeg-Bu
 tar -xf ffmpeg.zip
 rename ffmpeg-master-latest-win64-gpl-shared ffmpeg
 del ffmpeg.zip
-pause
