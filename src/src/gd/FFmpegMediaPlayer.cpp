@@ -57,7 +57,7 @@ void FFmpegMediaPlayer::audio_init()
 	player->play();
 	playback = player->get_stream_playback();
 	return;
-	int c = playback->get_frames_available();
+	int32_t c = playback->get_frames_available();
 	while (c > 0) {
 		playback->push_frame(Vector2(0, 0));
 		c -= 1;
@@ -81,7 +81,7 @@ bool FFmpegMediaPlayer::load_path(String _path) {
 		return false;
 	}
 
-	int d_state = nativeGetDecoderState(id);
+	int32_t d_state = nativeGetDecoderState(id);
 	if (d_state > 1) {
 		stop();
 		//LOG_ERROR("Decoder state: ") + String(std::to_string(d_state).c_str()));
@@ -107,7 +107,7 @@ bool FFmpegMediaPlayer::load_path(String _path) {
 
 void FFmpegMediaPlayer::load_path_async(String _path) {
 	LOG("[FFmpegMediaPlayer] start load path: ", _path);
-	int d_state = nativeGetDecoderState(id);
+	int32_t d_state = nativeGetDecoderState(id);
 	if (d_state > 1) {
 		LOG_ERROR("Decoder state: ", d_state);
 		return;
@@ -314,7 +314,7 @@ void FFmpegMediaPlayer::_process(float delta) {
 // TODO: Implement audio.
 
 void FFmpegMediaPlayer::_physics_process(float delta) {
-	int c = 0;
+	int32_t c = 0;
 	if (playback != nullptr && playback.is_valid() && audio_playback) {
 		c = playback->get_frames_available();
 	}
@@ -325,8 +325,8 @@ void FFmpegMediaPlayer::_physics_process(float delta) {
 	if (state_check) {
 		// TODO: Implement audio.
 		unsigned char* raw_audio_data = nullptr;
-		int audio_size = 0;
-		int channel = 0;
+		int32_t audio_size = 0;
+		int32_t channel = 0;
 		size_t byte_per_sample = 0;
 		/*
 		* AV_SAMPLE_FMT_FLT will usually give us byte_per_sample = 4
@@ -347,9 +347,9 @@ void FFmpegMediaPlayer::_physics_process(float delta) {
 
 			first_frame_a = false;
 
-			for (int i = 0; i < audio_size * channel; i += channel) {
+			for (int32_t i = 0; i < audio_size * channel; i += channel) {
 				float* out = new float[channel];
-				for (int j = 0; j < channel; j++) { // j have byte per sample padding for each sample
+				for (int32_t j = 0; j < channel; j++) { // j have byte per sample padding for each sample
 					s = audio_data[i + j];
 					out[j] = s;
 				}
@@ -368,7 +368,7 @@ void FFmpegMediaPlayer::_physics_process(float delta) {
 			nativeFreeAudioData(id);
 		}
 		else {
-			for (int i = 0; i < audio_size; i++) {
+			for (int32_t i = 0; i < audio_size; i++) {
 				audioFrame.push_back(lastSubmitAudioFrame);
 			}
 		}
@@ -408,13 +408,13 @@ AudioStreamPlayer* FFmpegMediaPlayer::get_player() const
 	return player;
 }
 
-void FFmpegMediaPlayer::set_sample_rate(const int rate)
+void FFmpegMediaPlayer::set_sample_rate(const int32_t rate)
 {
 	if (generator == nullptr) return;
 	generator->set_mix_rate(rate);
 }
 
-int FFmpegMediaPlayer::get_sample_rate() const
+int32_t FFmpegMediaPlayer::get_sample_rate() const
 {
 	if (generator == nullptr) return -1;
 	return generator->get_mix_rate();
@@ -466,7 +466,7 @@ FFmpegMediaPlayer::~FFmpegMediaPlayer() {
 	LOG("[FFmpegMediaPlayer] FFmpegMediaPlayer instance destroy.");
 }
 
-void FFmpegMediaPlayer::_notification(int p_what)
+void FFmpegMediaPlayer::_notification(int32_t p_what)
 {
 }
 

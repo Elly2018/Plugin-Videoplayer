@@ -145,8 +145,13 @@ public:
 	/// Get current use audio player
 	/// 
 	AudioStreamPlayer* get_player() const;
-
+	///
+	/// Set audio sample rate
+	///
 	void set_sample_rate(const int32_t rate);
+	///
+	/// Get audio sample rate
+	///
 	int32_t get_sample_rate() const;
 	void set_buffer_length(const double second);
 	double get_buffer_length() const;
