@@ -3,8 +3,8 @@
 #include <queue>
 
 #include <Unity/IUnityInterface.h>
-#include <unity/UnityInterface.h>
 #include <RenderAPI.h>
+#include "UnityInterface.h"
 
 struct Vector2 {
 	float x;
