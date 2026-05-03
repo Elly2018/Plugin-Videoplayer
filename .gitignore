@@ -11,10 +11,11 @@ src/ffmpeg*/
 example/Godot/addons/videoplayer/lib/Linux-AMD64/*.so
 example/Godot/addons/videoplayer/lib/Windows-AMD64/*.dll
 
-src/lib/ffmpeg.zip
-src/lib/ffmpeg.tar.xz
-src/lib/ffmpeg-linux64/
-src/lib/ffmpeg-win64/
+src/ffmpeg.zip
+src/ffmpeg.tar.xz
+src/ffmpeg-linux64/
+src/ffmpeg-win64/
+src/Makefile
 src/platform.txt
 
 # SConstruct
