@@ -41,3 +41,11 @@ godot-cpp/
 .vscode/
 .idea
 /SDL-main
+
+cmake_install.cmake
+install_local_manifest.txt
+install_manifest.txt
+
+src/cmake_install.cmake
+src/install_local_manifest.txt
+src/install_manifest.txt
