@@ -48,7 +48,7 @@ And apply to VR sphere mesh and a viewport texture in front of player
 ### Supported engine
 
 - [x] Godot 4.1+
-- [ ] Unity 2022.3.75f1
+- [ ] Unity 2022.3.62f3
 - [ ] Unreal 5
 - [ ] Native
 
