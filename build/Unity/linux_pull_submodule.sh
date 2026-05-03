@@ -1,7 +1,5 @@
 #!/bin/bash
-cd ../..
-git clone -b 4.1 https://github.com/godotengine/godot-cpp.git
-cd src
+cd ../../src
 
 if [ -d "ffmpeg" ]; then
     echo "ffmpeg folder exist"

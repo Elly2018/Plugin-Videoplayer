@@ -19,6 +19,8 @@ src/ffmpeg-linux64/
 src/ffmpeg-win64/
 src/Makefile
 src/platform.txt
+src/NativeRenderingPlugin
+src/NativeRenderingPlugin/
 
 # SConstruct
 .sconf_temp
@@ -35,7 +37,6 @@ libs/
 VideoPlayer.dir/
 
 # Extension
-src/unity-native/
 FFmpeg/
 godot-cpp
 godot-cpp/
