@@ -1,11 +1,10 @@
-#include <Logger.h>
 #include "FFmpegMediaPlayer.h"
-#include <RenderAPI.h>
-#include <interface/MediaDecoderUtility.h>
 #include <chrono>
+#include "../interface/MediaDecoderUtility.h"
+#include "Logger.h"
 
 void FFmpegMediaPlayer::_init_media() {
-	int* li = nullptr;
+	int li = 0;
 	int count = 0;
 	int current = 0;
 	LOG("start init media");

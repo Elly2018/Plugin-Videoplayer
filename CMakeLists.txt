@@ -140,7 +140,7 @@ if(POLICY CMP0177)
     cmake_policy(SET CMP0177 NEW)
 endif()
 
-add_subdirectory( templates )
+
 
 # ccache
 # Turns on ccache if found
@@ -152,6 +152,7 @@ include( ClangFormat )
 
 # godot-cpp
 if( "${Engine}" STREQUAL "Godot" )
+    add_subdirectory( templates )
 	# From here: https://github.com/godotengine/godot-cpp
 	if ( NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/godot-cpp/Makefile" )
 		message(
