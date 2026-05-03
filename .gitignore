@@ -4,11 +4,6 @@
 *.vs
 
 # Solutions
-NativeExtensionTemplate-build/
-GDExtensionTemplate-build/
-UnityExtensionTemplate-build/
-UnrealExtensionTemplate-build/
-
 build_**/
 reference
 src/ffmpeg/
@@ -39,6 +34,7 @@ VideoPlayer.dir/
 # Extension
 src/unity-native/
 FFmpeg/
+godot-cpp
 godot-cpp/
 
 # Editors
