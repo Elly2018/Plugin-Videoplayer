@@ -38,7 +38,6 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -514,7 +513,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4
+  m_Text: https://storage.googleapis.com/gtv-videos-bucket/sample
 --- !u!222 &242858768
 CanvasRenderer:
   m_ObjectHideFlags: 0
