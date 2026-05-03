@@ -10,6 +10,8 @@ src/ffmpeg/
 src/ffmpeg*/
 example/Godot/addons/videoplayer/lib/Linux-AMD64/*.so
 example/Godot/addons/videoplayer/lib/Windows-AMD64/*.dll
+example/Unity/Assets/EllyVideoPlayer/Plugin/Linux-AMD64/*.so
+example/Unity/Assets/EllyVideoPlayer/Plugin/Windows-AMD64/*.dll
 
 src/ffmpeg.zip
 src/ffmpeg.tar.xz
