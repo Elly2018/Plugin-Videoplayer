@@ -784,7 +784,7 @@ void DecoderFFmpeg::updateVideoFrame() {
 		mSwsContext = sws_getContext(
 			width, height, (AVPixelFormat)srcFrame->format,
 			width, height, dstFormat,
-			SWS_POINT | SWS_FULL_CHR_H_INT | SWS_ACCURATE_RND,
+			SWS_POINT,
 			nullptr, nullptr, nullptr);
 		mSwsWidth = width;
 		mSwsHeight = height;
