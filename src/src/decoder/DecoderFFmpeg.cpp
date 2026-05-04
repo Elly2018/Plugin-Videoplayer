@@ -22,30 +22,26 @@ extern "C" {
 static AVBufferRef* hw_device_ctx = NULL;
 static enum AVPixelFormat hw_pix_fmt;
 
-static int create_hwaccel(AVBufferRef **device_ctx, AVHWDeviceType type)
-{
-    int ret;
-    AVBufferRef *vk_dev = nullptr;
-
-    *device_ctx = NULL;
-
-    if (!type)
-        return 0;
-
-    if (type == AV_HWDEVICE_TYPE_NONE)
-        return AVERROR(ENOTSUP);
-
-    ret = av_hwdevice_ctx_create_derived(device_ctx, type, vk_dev, 0);
-    if (!ret)
-        return 0;
-
-    if (ret != AVERROR(ENOSYS))
-        return ret;
-
-    av_log(NULL, AV_LOG_WARNING, "Derive %d from vulkan not supported.\n", type);
-    ret = av_hwdevice_ctx_create(device_ctx, type, NULL, NULL, 0);
-    return ret;
+static int32_t hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type) {
+    int32_t err = 0;
+    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type, NULL, NULL, 0)) < 0) {
+        fprintf(stderr, "Failed to create specified HW device.\n");
+        return err;
+    }
+    ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
+    return err;
 }
+ 
+static enum AVPixelFormat get_hw_format(AVCodecContext *ctx, const enum AVPixelFormat *pix_fmts) {
+    const enum AVPixelFormat *p;
+    for (p = pix_fmts; *p != -1; p++) {
+        if (*p == hw_pix_fmt)
+            return *p;
+    }
+    fprintf(stderr, "Failed to get HW surface format.\n");
+    return AV_PIX_FMT_NONE;
+}
+
 #endif
 
 DecoderFFmpeg::DecoderFFmpeg() {
@@ -178,13 +174,13 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 
 	/* Video initialization */
 	LOG("[DecoderFFmpeg] Video initialization  ");
-	st_index[AVMEDIA_TYPE_VIDEO] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_VIDEO, st_index[AVMEDIA_TYPE_VIDEO], -1, NULL, 0);
+	st_index[AVMEDIA_TYPE_VIDEO] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_VIDEO, st_index[AVMEDIA_TYPE_VIDEO], -1, &mVideoCodec, 0);
 
 	LOG("[DecoderFFmpeg] Audio initialization ");
-	st_index[AVMEDIA_TYPE_AUDIO] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_AUDIO, st_index[AVMEDIA_TYPE_AUDIO], st_index[AVMEDIA_TYPE_VIDEO], NULL, 0);
+	st_index[AVMEDIA_TYPE_AUDIO] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_AUDIO, st_index[AVMEDIA_TYPE_AUDIO], st_index[AVMEDIA_TYPE_VIDEO], &mAudioCodec, 0);
 
 	LOG("[DecoderFFmpeg] Subtitle initialization ");
-	st_index[AVMEDIA_TYPE_SUBTITLE] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_SUBTITLE, (st_index[AVMEDIA_TYPE_AUDIO] >= 0 ? st_index[AVMEDIA_TYPE_AUDIO] : st_index[AVMEDIA_TYPE_VIDEO]), st_index[AVMEDIA_TYPE_VIDEO], NULL, 0);
+	st_index[AVMEDIA_TYPE_SUBTITLE] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_SUBTITLE, (st_index[AVMEDIA_TYPE_AUDIO] >= 0 ? st_index[AVMEDIA_TYPE_AUDIO] : st_index[AVMEDIA_TYPE_VIDEO]), st_index[AVMEDIA_TYPE_VIDEO], &mSubtitleCodec, 0);
 
 	if (st_index[AVMEDIA_TYPE_VIDEO] < 0) {
 		LOG("[DecoderFFmpeg] video stream not found. ", st_index[AVMEDIA_TYPE_VIDEO]);
@@ -192,18 +188,11 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 	} else {
 		mVideoInfo.isEnabled = true;
 		mVideoStream = mAVFormatContext->streams[st_index[AVMEDIA_TYPE_VIDEO]];
-        mVideoCodecContext = avcodec_alloc_context3(NULL);
+        mVideoCodecContext = avcodec_alloc_context3(mVideoCodec);
 		if (!mVideoCodecContext) return false;
         mVideoCodecContext->refs = 1;
         int32_t ret = avcodec_parameters_to_context(mVideoCodecContext, mVideoStream->codecpar);
-#ifdef DECODER_HW
-		if (type != AV_HWDEVICE_TYPE_NONE) {
-			LOG("[DecoderFFmpeg] hwaccel: ", type);
-			create_hwaccel(&mVideoCodecContext->hw_device_ctx, type);
-		}
-#endif
 		LOG("[DecoderFFmpeg] Video codec id: ", mVideoCodecContext->codec_id);
-		mVideoCodec = avcodec_find_decoder(mVideoCodecContext->codec_id);
 		if (mVideoCodec == nullptr) {
 			LOG("Video codec not available.");
 			return false;
@@ -239,11 +228,10 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 	} else {
 		mAudioInfo.isEnabled = true;
 		mAudioStream = mAVFormatContext->streams[st_index[AVMEDIA_TYPE_AUDIO]];
-		mAudioCodecContext = avcodec_alloc_context3(NULL);
+		mAudioCodecContext = avcodec_alloc_context3(mAudioCodec);
         avcodec_parameters_to_context(mAudioCodecContext, mAudioStream->codecpar);
 		LOG("[DecoderFFmpeg] Audio codec id: ", mAudioCodecContext->codec_id);
 		mAudioCodecContext->pkt_timebase = mAudioStream->time_base;
-        mAudioCodec = avcodec_find_decoder(mAudioCodecContext->codec_id);
 		if (mAudioCodec == nullptr) {
 			LOG("[DecoderFFmpeg] Audio codec not available. ");
 			return false;
@@ -271,6 +259,25 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		//mAudioFrames.swap(decltype(mAudioFrames)());
 		mAudioInfo.currentIndex = st_index[AVMEDIA_TYPE_AUDIO];
 	}
+
+#ifdef DECODER_HW
+	for (int32_t i = 0;; i++) {
+        const AVCodecHWConfig *config = avcodec_get_hw_config(mVideoCodec, i);
+        if (!config) {
+			LOG_ERROR("Decoder %s does not support device type", mVideoCodec->name, av_hwdevice_get_type_name(type));
+            return -1;
+        }
+        if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
+            config->device_type == type) {
+            hw_pix_fmt = config->pix_fmt;
+            break;
+        }
+    }
+
+	mVideoCodecContext->get_format = get_hw_format;
+	if (hw_decoder_init(mVideoCodecContext, type) < 0)
+        return -1;
+#endif
 
 	std::vector<int> videoIndex = std::vector<int>();
 	std::vector<int> audioIndex = std::vector<int>();
@@ -659,7 +666,28 @@ void DecoderFFmpeg::preloadVideoFrame()
 			}
 			return;
 		}
+#ifdef DECODER_HW
+		if (srcFrame->format == hw_pix_fmt && hw_pix_fmt != AV_PIX_FMT_NONE) {
+			AVFrame* destFrame = av_frame_alloc();
+			//av_frame_copy_props(destFrame, srcFrame);
+			ret = av_hwframe_transfer_data(destFrame, srcFrame, 0);
+			destFrame->best_effort_timestamp = srcFrame->best_effort_timestamp;
+			destFrame->pts = srcFrame->pts;
+			destFrame->pkt_dts = srcFrame->pkt_dts;
+			destFrame->width = srcFrame->width;
+			destFrame->height = srcFrame->height;
+			if (ret < 0) {
+				LOG_ERROR("[DecoderFFmpeg | ERROR] av_hwframe_transfer_data error: ", ret);
+			}
+			av_frame_free(&srcFrame);
+			mVideoFramesPreload.push(destFrame);
+		}
+		else {
+			mVideoFramesPreload.push(srcFrame);
+		}
+#else
 		mVideoFramesPreload.push(srcFrame);
+#endif
 	} while (ret != AVERROR(EAGAIN));
 }
 
