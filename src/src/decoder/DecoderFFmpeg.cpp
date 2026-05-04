@@ -182,6 +182,23 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 	LOG("[DecoderFFmpeg] Subtitle initialization ");
 	st_index[AVMEDIA_TYPE_SUBTITLE] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_SUBTITLE, (st_index[AVMEDIA_TYPE_AUDIO] >= 0 ? st_index[AVMEDIA_TYPE_AUDIO] : st_index[AVMEDIA_TYPE_VIDEO]), st_index[AVMEDIA_TYPE_VIDEO], &mSubtitleCodec, 0);
 
+#ifdef DECODER_HW
+	hw_pix_fmt = AV_PIX_FMT_NONE;  // default: no HW
+    for (int32_t i = 0;; i++) {
+        const AVCodecHWConfig *config = avcodec_get_hw_config(mVideoCodec, i);
+        if (!config) {
+            // This codec has no HW support — that's fine, use SW
+            LOG("[DecoderFFmpeg] No HW config for: ", mVideoCodec->name, ", falling back to SW");
+            break;
+        }
+        if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
+            config->device_type == type) {
+            hw_pix_fmt = config->pix_fmt;
+            break;
+        }
+    }
+#endif
+
 	if (st_index[AVMEDIA_TYPE_VIDEO] < 0) {
 		LOG("[DecoderFFmpeg] video stream not found. ", st_index[AVMEDIA_TYPE_VIDEO]);
 		mVideoInfo.isEnabled = false;
@@ -203,6 +220,33 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		mVideoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
 		errorCode = avcodec_open2(mVideoCodecContext, mVideoCodec, &autoThread);
 		av_dict_free(&autoThread);
+
+#ifdef DECODER_HW
+    // Only set up HW pipeline if a matching format was found
+    if (hw_pix_fmt != AV_PIX_FMT_NONE) {
+		mVideoCodecContext->get_format = get_hw_format;
+		if (hw_decoder_init(mVideoCodecContext, type) < 0) {
+			LOG("[DecoderFFmpeg] HW device init failed — falling back to SW decode");
+			hw_pix_fmt = AV_PIX_FMT_NONE;
+			mVideoCodecContext->get_format = nullptr;
+			// Reopen codec context without HW
+			avcodec_free_context(&mVideoCodecContext);
+			mVideoCodecContext = avcodec_alloc_context3(mVideoCodec);
+			avcodec_parameters_to_context(mVideoCodecContext, mVideoStream->codecpar);
+			mVideoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
+			AVDictionary *swThread = nullptr;
+			av_dict_set(&swThread, "threads", "auto", 0);
+			errorCode = avcodec_open2(mVideoCodecContext, mVideoCodec, &swThread);
+			av_dict_free(&swThread);
+			if (errorCode < 0) {
+				LOG_ERROR("[DecoderFFmpeg] SW fallback codec open failed: ", errorCode);
+				return false;
+			}
+		}
+	}
+#endif
+
+
 		if (errorCode < 0) {
 			LOG("[DecoderFFmpeg] Could not open video codec: ", errorCode);
 			printErrorMsg(errorCode);
@@ -259,33 +303,6 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		//mAudioFrames.swap(decltype(mAudioFrames)());
 		mAudioInfo.currentIndex = st_index[AVMEDIA_TYPE_AUDIO];
 	}
-
-#ifdef DECODER_HW
-	hw_pix_fmt = AV_PIX_FMT_NONE;  // default: no HW
-    for (int32_t i = 0;; i++) {
-        const AVCodecHWConfig *config = avcodec_get_hw_config(mVideoCodec, i);
-        if (!config) {
-            // This codec has no HW support — that's fine, use SW
-            LOG("[DecoderFFmpeg] No HW config for: ", mVideoCodec->name, ", falling back to SW");
-            break;
-        }
-        if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
-            config->device_type == type) {
-            hw_pix_fmt = config->pix_fmt;
-            break;
-        }
-    }
-
-    // Only set up HW pipeline if a matching format was found
-    if (hw_pix_fmt != AV_PIX_FMT_NONE) {
-        mVideoCodecContext->get_format = get_hw_format;
-        if (hw_decoder_init(mVideoCodecContext, type) < 0) {
-            LOG("[DecoderFFmpeg] HW init failed, falling back to SW");
-            hw_pix_fmt = AV_PIX_FMT_NONE;
-            mVideoCodecContext->get_format = nullptr;
-        }
-    }
-#endif
 
 	std::vector<int> videoIndex = std::vector<int>();
 	std::vector<int> audioIndex = std::vector<int>();
@@ -655,14 +672,14 @@ void DecoderFFmpeg::preloadVideoFrame()
 {
 	int32_t ret = avcodec_send_packet(mVideoCodecContext, mPacket);
 	if (ret != 0) {
-		LOG_ERROR("[DecoderFFmpeg | VERBOSE] Video frame update failed: avcodec_send_packet ", ret);
+		LOG_ERROR_VERBOSE("[DecoderFFmpeg | VERBOSE] Video frame update failed: avcodec_send_packet ", ret);
 		return;
 	}
 	do {
 		AVFrame* srcFrame = av_frame_alloc();
 		ret = avcodec_receive_frame(mVideoCodecContext, srcFrame);
 		if (ret != 0) {
-			LOG_ERROR("[DecoderFFmpeg | VERBOSE] Video frame update failed: avcodec_receive_frame ", ret);
+			LOG_ERROR_VERBOSE("[DecoderFFmpeg | VERBOSE] Video frame update failed: avcodec_receive_frame ", ret);
 			if(ret == AVERROR(EAGAIN)){
 				LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] ", ret, ": AVERROR(EAGAIN)");
 			}
@@ -703,14 +720,14 @@ void DecoderFFmpeg::preloadAudioFrame()
 {
 	int ret = avcodec_send_packet(mAudioCodecContext, mPacket);
 	if (ret != 0) {
-		LOG_ERROR("[DecoderFFmpeg | VERBOSE] Audio frame update failed: avcodec_send_packet ", ret);
+		LOG_ERROR_VERBOSE("[DecoderFFmpeg | VERBOSE] Audio frame update failed: avcodec_send_packet ", ret);
 		return;
 	}
 	do {
 		AVFrame* srcFrame = av_frame_alloc();
 		ret = avcodec_receive_frame(mAudioCodecContext, srcFrame);
 		if (ret != 0) {
-			LOG_ERROR("[DecoderFFmpeg | VERBOSE] Audio frame update failed: avcodec_receive_frame ", ret);
+			LOG_ERROR_VERBOSE("[DecoderFFmpeg | VERBOSE] Audio frame update failed: avcodec_receive_frame ", ret);
 			return;
 		}
 		mAudioFramesPreload.push(srcFrame);
