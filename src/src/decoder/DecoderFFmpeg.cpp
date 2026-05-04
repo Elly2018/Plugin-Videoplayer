@@ -718,8 +718,7 @@ void DecoderFFmpeg::preloadVideoFrame()
 			}
 			av_frame_free(&srcFrame);
 			mVideoFramesPreload.push(destFrame);
-		}
-		else {
+		} else {
 			mVideoFramesPreload.push(srcFrame);
 		}
 #else
