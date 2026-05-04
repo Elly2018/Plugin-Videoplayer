@@ -150,6 +150,7 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 	double ctxDuration = (double)(mAVFormatContext->duration) / AV_TIME_BASE;
 #ifdef DECODER_HW
 	type = av_hwdevice_iterate_types(type);
+	LOG("[DecoderFFmpeg] HW device type: ", av_hwdevice_get_type_name(type));
 #endif
 
 	for (int32_t i = 0; i < mAVFormatContext->nb_streams; i++) {
