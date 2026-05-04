@@ -31,7 +31,7 @@ static int32_t hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType ty
     ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
     return err;
 }
- 
+
 static enum AVPixelFormat get_hw_format(AVCodecContext *ctx, const enum AVPixelFormat *pix_fmts) {
     const enum AVPixelFormat *p;
     for (p = pix_fmts; *p != -1; p++) {
@@ -229,7 +229,6 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		if (hw_pix_fmt != AV_PIX_FMT_NONE) {
 			mVideoCodecContext->get_format = get_hw_format;
 			if (hw_decoder_init(mVideoCodecContext, type) < 0) {
-				LOG("[DecoderFFmpeg] HW device init failed — falling back to SW decode");
 				hw_pix_fmt = AV_PIX_FMT_NONE;
 				mVideoCodecContext->get_format = nullptr;
 				// Reopen codec context without HW
@@ -242,6 +241,8 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 					LOG_ERROR("[DecoderFFmpeg] SW fallback codec open failed: ", errorCode);
 					return false;
 				}
+			}else{
+				LOG("[DecoderFFmpeg] HW device init failed — falling back to SW decode");
 			}
 		}
 		av_dict_free(&autoThread);
@@ -639,6 +640,7 @@ void DecoderFFmpeg::destroy() {
 	memset(&mVideoInfo, 0, sizeof(VideoInfo));
 	memset(&mAudioInfo, 0, sizeof(AudioInfo));
 	memset(&mSubtitleInfo, 0, sizeof(SubtitleInfo));
+	memset(&mBenchmarkInfo, 0, sizeof(BenchmarkInfo));
 	
 	mIsInitialized = false;
 	mIsAudioAllChEnabled = false;

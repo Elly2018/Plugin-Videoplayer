@@ -281,6 +281,10 @@ bool AVDecoderHandler::isVideoBufferFull() {
 	return videoInfo.isEnabled && videoInfo.bufferState == _FULL;
 }
 
+std::vector<double> AVDecoderHandler::getBenchmark() {
+	std::vector<double> a = std::vector<double>();
+}
+
 int32_t AVDecoderHandler::getMetaData(char**& key, char**& value) const {
 	if (mIDecoder == nullptr ||mDecoderState <= UNINITIALIZED) {
 		return 0;

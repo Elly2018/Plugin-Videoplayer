@@ -22,6 +22,9 @@ typedef struct VideoContext {
 	bool initThreadRunning = false;
 	bool destroying = false;
 	std::unique_ptr<AVDecoderHandler> avhandler = nullptr;
+	double decoderTime = 0.0;
+	double swsTime = 0.0;
+	double receivedTime = 0.0;
 	float progressTime = 0.0f;
 	float lastUpdateTimeV = -1.0f;
 	float lastUpdateTimeA = -1.0f;
@@ -445,4 +448,22 @@ bool nativeIsEOF(int32_t id) {
 	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { return true; }
 
 	return videoCtx->avhandler->getDecoderState() == AVDecoderHandler::DecoderState::DECODE_EOF;
+}
+
+double nativeGetTotalDecoderTime(int32_t id) {
+	std::shared_ptr<VideoContext> videoCtx;
+	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { return -1; }
+	return videoCtx->decoderTime;
+}
+
+double nativeGetSWSTime(int32_t id) {
+	std::shared_ptr<VideoContext> videoCtx;
+	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { return -1; }
+	return videoCtx->swsTime;
+}
+
+double nativeGetReceivedTime(int32_t id) {
+	std::shared_ptr<VideoContext> videoCtx;
+	if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { return -1; }
+	return videoCtx->receivedTime;
 }

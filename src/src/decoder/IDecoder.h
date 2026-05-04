@@ -33,6 +33,12 @@ public:
 	struct SubtitleInfo : public BaseInfo {
 		bool isEnabled;
 	};
+
+	struct BenchmarkInfo {
+		double decoderTime = 0.0;
+		double swsTime = 0.0;
+		double receivedTime = 0.0;
+	};
 	
 	virtual bool init(const char* filePath) = 0;
 	virtual bool decode() = 0;

@@ -50,6 +50,7 @@ public:
 	bool isVideoBufferEmpty();
 	bool isAudioBufferEmpty();
 	bool isVideoBufferFull();
+	std::vector<double> getBenchmark();
 
 	int32_t getMetaData(char**& key, char**& value) const;
 

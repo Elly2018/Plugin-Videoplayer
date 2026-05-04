@@ -73,4 +73,7 @@ bool nativeIsSeekOver(int32_t id);
 //
 int32_t nativeGetClock(int32_t id);
 int32_t nativeGetMetaData(const char* filePath, char*** key, char*** value);
+double nativeGetTotalDecoderTime(int32_t id);
+double nativeGetSWSTime(int32_t id);
+double nativeGetReceivedTime(int32_t id);
 }

@@ -95,9 +95,10 @@ private:
 	AVPixelFormat mSwsSrcFormat;
 	int32_t initSwrContext();
 
-	VideoInfo	mVideoInfo{};
-	AudioInfo	mAudioInfo{};
-	SubtitleInfo	mSubtitleInfo{};
+	VideoInfo mVideoInfo{};
+	AudioInfo mAudioInfo{};
+	SubtitleInfo mSubtitleInfo{};
+	BenchmarkInfo mBenchmarkInfo{};
 	void updateBufferState();
 
 	int32_t mFrameBufferNum;
