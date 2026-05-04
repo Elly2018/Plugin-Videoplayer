@@ -13,29 +13,19 @@ using namespace godot;
 
 void GDExtension_Initialize(ModuleInitializationLevel p_level)
 {
-	LOG("FFmpeg extension initialize");
 	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
 		return;
 	}
-
+	LOG("FFmpeg extension initialize");
 	GDREGISTER_CLASS(FFmpegMediaPlayer);
-	//GDREGISTER_CLASS(FFmpegMediaEncoder);
-	//GDREGISTER_CLASS(VRVideoFilter);
-	//ClassDB::register_class<MySingleton>();
-	//_my_singleton = memnew(MySingleton);
-	//Engine::get_singleton()->register_singleton("MySingleton", MySingleton::get_singleton());
 }
 
 void GDExtension_Terminate(ModuleInitializationLevel p_level)
 {
-	LOG("FFmpeg extension terminate");
-	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE)
-	{
-		ClassDB::register_class<FFmpegMediaPlayer>();
-		//ClassDB::register_class<MySingleton>();
-		//_my_singleton = memnew(MySingleton);
-		//Engine::get_singleton()->register_singleton("MySingleton", MySingleton::get_singleton());
+	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
+		return;
 	}
+	LOG("FFmpeg extension terminate");
 }
 
 extern "C"

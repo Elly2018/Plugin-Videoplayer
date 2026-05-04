@@ -19,13 +19,13 @@ extern "C" {
 #endif
 
 #ifdef DECODER_HW
-static AVBufferRef* hw_device_ctx = NULL;
-static enum AVPixelFormat hw_pix_fmt;
+static AVBufferRef* hw_device_ctx = nullptr;
+static enum AVPixelFormat hw_pix_fmt = AV_PIX_FMT_NONE;
 
 static int32_t hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type) {
     int32_t err = 0;
     if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type, NULL, NULL, 0)) < 0) {
-        fprintf(stderr, "Failed to create specified HW device.\n");
+        LOG_ERROR("Failed to create specified HW device");
         return err;
     }
     ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
@@ -38,7 +38,7 @@ static enum AVPixelFormat get_hw_format(AVCodecContext *ctx, const enum AVPixelF
         if (*p == hw_pix_fmt)
             return *p;
     }
-    fprintf(stderr, "Failed to get HW surface format.\n");
+    LOG_ERROR("Failed to get HW surface format.");
     return AV_PIX_FMT_NONE;
 }
 
@@ -261,11 +261,13 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 	}
 
 #ifdef DECODER_HW
-	for (int32_t i = 0;; i++) {
+	hw_pix_fmt = AV_PIX_FMT_NONE;  // default: no HW
+    for (int32_t i = 0;; i++) {
         const AVCodecHWConfig *config = avcodec_get_hw_config(mVideoCodec, i);
         if (!config) {
-			LOG_ERROR("Decoder %s does not support device type", mVideoCodec->name, av_hwdevice_get_type_name(type));
-            return -1;
+            // This codec has no HW support — that's fine, use SW
+            LOG("[DecoderFFmpeg] No HW config for: ", mVideoCodec->name, ", falling back to SW");
+            break;
         }
         if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
             config->device_type == type) {
@@ -274,9 +276,15 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
         }
     }
 
-	mVideoCodecContext->get_format = get_hw_format;
-	if (hw_decoder_init(mVideoCodecContext, type) < 0)
-        return -1;
+    // Only set up HW pipeline if a matching format was found
+    if (hw_pix_fmt != AV_PIX_FMT_NONE) {
+        mVideoCodecContext->get_format = get_hw_format;
+        if (hw_decoder_init(mVideoCodecContext, type) < 0) {
+            LOG("[DecoderFFmpeg] HW init failed, falling back to SW");
+            hw_pix_fmt = AV_PIX_FMT_NONE;
+            mVideoCodecContext->get_format = nullptr;
+        }
+    }
 #endif
 
 	std::vector<int> videoIndex = std::vector<int>();
@@ -647,14 +655,14 @@ void DecoderFFmpeg::preloadVideoFrame()
 {
 	int32_t ret = avcodec_send_packet(mVideoCodecContext, mPacket);
 	if (ret != 0) {
-		LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Video frame update failed: avcodec_send_packet ", ret);
+		LOG_ERROR("[DecoderFFmpeg | VERBOSE] Video frame update failed: avcodec_send_packet ", ret);
 		return;
 	}
 	do {
 		AVFrame* srcFrame = av_frame_alloc();
 		ret = avcodec_receive_frame(mVideoCodecContext, srcFrame);
 		if (ret != 0) {
-			LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Video frame update failed: avcodec_receive_frame ", ret);
+			LOG_ERROR("[DecoderFFmpeg | VERBOSE] Video frame update failed: avcodec_receive_frame ", ret);
 			if(ret == AVERROR(EAGAIN)){
 				LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] ", ret, ": AVERROR(EAGAIN)");
 			}
@@ -695,14 +703,14 @@ void DecoderFFmpeg::preloadAudioFrame()
 {
 	int ret = avcodec_send_packet(mAudioCodecContext, mPacket);
 	if (ret != 0) {
-		LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Audio frame update failed: avcodec_send_packet ", ret);
+		LOG_ERROR("[DecoderFFmpeg | VERBOSE] Audio frame update failed: avcodec_send_packet ", ret);
 		return;
 	}
 	do {
 		AVFrame* srcFrame = av_frame_alloc();
 		ret = avcodec_receive_frame(mAudioCodecContext, srcFrame);
 		if (ret != 0) {
-			LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Audio frame update failed: avcodec_receive_frame ", ret);
+			LOG_ERROR("[DecoderFFmpeg | VERBOSE] Audio frame update failed: avcodec_receive_frame ", ret);
 			return;
 		}
 		mAudioFramesPreload.push(srcFrame);
