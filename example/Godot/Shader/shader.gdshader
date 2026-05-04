@@ -12,9 +12,9 @@ void fragment() {
 	else{
 		vec2 r = vec2(0,0);
 		if(mode == 1){ // Top down
-			bool left = UV.y > 0.5;
-			left = flip ? !left : left;
-			if(left){
+			bool top = UV.y > 0.0;
+			top = flip ? !top : top;
+			if(top){
 				r = vec2(UV.x, UV.y * 0.5 + 0.5);
 			}else{
 				r = vec2(UV.x, UV.y * 0.5);

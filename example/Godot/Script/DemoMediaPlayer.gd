@@ -10,6 +10,9 @@ class_name DemoMediaPlayer extends Node
 @export var player: FFmpegMediaPlayer;
 @export var audio_stream: AudioStreamPlayer;
 
+# /home/funique0807/Videos/test.mp4
+# Resource/sbs_vr.webm
+
 # Big Buck mp4
 # http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4
 # Big Buck 480p

@@ -22,29 +22,30 @@ extern "C" {
 static AVBufferRef* hw_device_ctx = NULL;
 static enum AVPixelFormat hw_pix_fmt;
 
-static int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type)
+static int create_hwaccel(AVBufferRef **device_ctx, AVHWDeviceType type)
 {
-	int err = 0;
-	if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type,
-		NULL, NULL, 0)) < 0) {
-		LOG_ERROR("Failed to create specified HW device.");
-		return err;
-	}
-	ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
-	return err;
-}
+    int ret;
+    AVBufferRef *vk_dev = nullptr;
 
-static AVPixelFormat get_hw_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts)
-{
-	const enum AVPixelFormat* p;
-	for (p = pix_fmts; *p != -1; p++) {
-		if (*p == hw_pix_fmt)
-			return *p;
-	}
-	LOG_ERROR("Failed to get HW surface format.");
-	return AV_PIX_FMT_NONE;
-}
+    *device_ctx = NULL;
 
+    if (!type)
+        return 0;
+
+    if (type == AV_HWDEVICE_TYPE_NONE)
+        return AVERROR(ENOTSUP);
+
+    ret = av_hwdevice_ctx_create_derived(device_ctx, type, vk_dev, 0);
+    if (!ret)
+        return 0;
+
+    if (ret != AVERROR(ENOSYS))
+        return ret;
+
+    av_log(NULL, AV_LOG_WARNING, "Derive %d from vulkan not supported.\n", type);
+    ret = av_hwdevice_ctx_create(device_ctx, type, NULL, NULL, 0);
+    return ret;
+}
 #endif
 
 DecoderFFmpeg::DecoderFFmpeg() {
@@ -197,10 +198,8 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
         int32_t ret = avcodec_parameters_to_context(mVideoCodecContext, mVideoStream->codecpar);
 #ifdef DECODER_HW
 		if (type != AV_HWDEVICE_TYPE_NONE) {
-
-			mVideoCodecContext->get_format = get_hw_format;
-			hw_decoder_init(mVideoCodecContext, type);
 			LOG("[DecoderFFmpeg] hwaccel: ", type);
+			create_hwaccel(&mVideoCodecContext->hw_device_ctx, type);
 		}
 #endif
 		LOG("[DecoderFFmpeg] Video codec id: ", mVideoCodecContext->codec_id);
@@ -232,21 +231,6 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		mVideoInfo.totalTime = mVideoStream->duration <= 0 ? ctxDuration : mVideoStream->duration * av_q2d(mVideoStream->time_base);
 		//mVideoFrames.swap(decltype(mVideoFrames)());
 	}
-
-#ifdef DECODER_HW
-	for (int i = 0;; i++) {
-		const AVCodecHWConfig* config = avcodec_get_hw_config(mVideoCodec, i);
-		if (!config) {
-			LOG_ERROR("[DecoderFFmpeg | ERROR] Decoder ", mVideoCodec->name, " does not support device type, ", av_hwdevice_get_type_name(type));
-			hw_pix_fmt = AV_PIX_FMT_NONE;
-		}
-		if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
-			config->device_type == type) {
-			hw_pix_fmt = config->pix_fmt;
-			break;
-		}
-	}
-#endif
 
 	/* Audio initialization */
 	if (st_index[AVMEDIA_TYPE_AUDIO] < 0) {
@@ -675,28 +659,7 @@ void DecoderFFmpeg::preloadVideoFrame()
 			}
 			return;
 		}
-#ifdef DECODER_HW
-		if (srcFrame->format == hw_pix_fmt && hw_pix_fmt != AV_PIX_FMT_NONE) {
-			AVFrame* destFrame = av_frame_alloc();
-			av_frame_copy_props(destFrame, srcFrame);
-			ret = av_hwframe_transfer_data(destFrame, srcFrame, 0);
-			destFrame->best_effort_timestamp = srcFrame->best_effort_timestamp;
-			destFrame->pts = srcFrame->pts;
-			destFrame->pkt_dts = srcFrame->pkt_dts;
-			destFrame->width = srcFrame->width;
-			destFrame->height = srcFrame->height;
-			if (ret < 0) {
-				LOG_ERROR("[DecoderFFmpeg | ERROR] av_hwframe_transfer_data error: ", ret);
-			}
-			av_frame_free(&srcFrame);
-			mVideoFramesPreload.push(destFrame);
-		}
-		else {
-			mVideoFramesPreload.push(srcFrame);
-		}
-#else
 		mVideoFramesPreload.push(srcFrame);
-#endif
 	} while (ret != AVERROR(EAGAIN));
 }
 

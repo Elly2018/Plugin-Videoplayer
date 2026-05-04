@@ -9,7 +9,6 @@ colors = PackedColorArray(0, 0, 0, 1, 0, 0, 0, 1)
 
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_hv1hq"]
 generate_mipmaps = false
-seamless = true
 normalize = false
 color_ramp = SubResource("Gradient_6eiqs")
 noise = SubResource("FastNoiseLite_ot31o")
@@ -17,6 +16,6 @@ noise = SubResource("FastNoiseLite_ot31o")
 [resource]
 render_priority = 0
 shader = ExtResource("1_35wnn")
-shader_parameter/flip = null
+shader_parameter/flip = false
 shader_parameter/mode = 2
 shader_parameter/tex = SubResource("NoiseTexture2D_hv1hq")
