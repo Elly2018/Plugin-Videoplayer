@@ -699,8 +699,14 @@ void DecoderFFmpeg::preloadVideoFrame()
 #ifdef DECODER_HW
 		if (srcFrame->format == hw_pix_fmt && hw_pix_fmt != AV_PIX_FMT_NONE) {
 			AVFrame* destFrame = av_frame_alloc();
-			//av_frame_copy_props(destFrame, srcFrame);
+			av_frame_copy_props(destFrame, srcFrame);
 			ret = av_hwframe_transfer_data(destFrame, srcFrame, 0);
+			if (ret < 0) {
+				LOG_ERROR("[DecoderFFmpeg | ERROR] av_hwframe_transfer_data error: ", ret);
+				av_frame_free(&destFrame);
+				av_frame_free(&srcFrame);
+				return;
+			}
 			destFrame->best_effort_timestamp = srcFrame->best_effort_timestamp;
 			destFrame->pts = srcFrame->pts;
 			destFrame->pkt_dts = srcFrame->pkt_dts;
@@ -757,24 +763,13 @@ void DecoderFFmpeg::updateVideoFrame() {
 	LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Video format. w: ", width, ", h: ", height, ", f: ", dstFormat);
 	AVFrame* dstFrame = av_frame_alloc();
 	av_frame_copy_props(dstFrame, srcFrame);
-
-	dstFrame->format = dstFormat;
 	dstFrame->best_effort_timestamp = srcFrame->best_effort_timestamp;
 	dstFrame->pkt_dts = srcFrame->pkt_dts;
 	dstFrame->pts = srcFrame->best_effort_timestamp;
-	
-	//av_image_alloc(dstFrame->data, dstFrame->linesize, dstFrame->width, dstFrame->height, dstFormat, 0)
-	int numBytes = av_image_get_buffer_size(dstFormat, width, height, 1);
-	LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Number of bytes: ", numBytes);
-	AVBufferRef* buffer = av_buffer_alloc(numBytes * sizeof(uint8_t));
-	//avpicture_fill((AVPicture *)dstFrame,buffer->data,dstFormat,width,height);
-	if (buffer == nullptr) {
-		LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] The video frame buffer is nullptr");
-		return;
-	}
-
-	av_image_fill_arrays(dstFrame->data, dstFrame->linesize, buffer->data, dstFormat, width, height, 1);
-	dstFrame->buf[0] = buffer;
+	dstFrame->format = dstFormat;
+	dstFrame->width  = width;
+	dstFrame->height = height;
+	av_frame_get_buffer(dstFrame, 1);
 
 	if (mSwsContext == nullptr || 
 		mSwsWidth != width || 
@@ -784,11 +779,18 @@ void DecoderFFmpeg::updateVideoFrame() {
 		mSwsContext = sws_getContext(
 			width, height, (AVPixelFormat)srcFrame->format,
 			width, height, dstFormat,
-			SWS_POINT,
+			SWS_BILINEAR,
 			nullptr, nullptr, nullptr);
 		mSwsWidth = width;
 		mSwsHeight = height;
 		mSwsSrcFormat = (AVPixelFormat)srcFrame->format;
+		// Set correct input colorspace from frame metadata
+		int srcRange = (srcFrame->color_range == AVCOL_RANGE_JPEG) ? 1 : 0; // 1=full, 0=limited
+		int dstRange = 1; // RGB output is always full range
+		const int* srcTable = sws_getCoefficients(
+			srcFrame->colorspace == AVCOL_SPC_UNSPECIFIED ? SWS_CS_DEFAULT : srcFrame->colorspace);
+		const int* dstTable = sws_getCoefficients(SWS_CS_DEFAULT);
+		sws_setColorspaceDetails(mSwsContext, srcTable, srcRange, dstTable, dstRange, 0, 1<<16, 1<<16);
 	}
 	
 	sws_scale(mSwsContext, srcFrame->data, srcFrame->linesize, 0, height, dstFrame->data, dstFrame->linesize);
