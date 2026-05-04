@@ -72,6 +72,10 @@ DecoderFFmpeg::DecoderFFmpeg() {
 	mIsAudioAllChEnabled = false;
 	mUseTCP = false;
 	mIsSeekToAny = false;
+
+	mSwsContext = nullptr;
+	mSwsWidth = mSwsHeight = 0;
+	mSwsSrcFormat = AV_PIX_FMT_NONE;
 }
 
 DecoderFFmpeg::~DecoderFFmpeg() {
@@ -219,31 +223,27 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		av_dict_set(&autoThread, "flags", "+copy_opaque", AV_DICT_MULTIKEY);
 		mVideoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
 		errorCode = avcodec_open2(mVideoCodecContext, mVideoCodec, &autoThread);
-		av_dict_free(&autoThread);
-
 #ifdef DECODER_HW
-    // Only set up HW pipeline if a matching format was found
-    if (hw_pix_fmt != AV_PIX_FMT_NONE) {
-		mVideoCodecContext->get_format = get_hw_format;
-		if (hw_decoder_init(mVideoCodecContext, type) < 0) {
-			LOG("[DecoderFFmpeg] HW device init failed — falling back to SW decode");
-			hw_pix_fmt = AV_PIX_FMT_NONE;
-			mVideoCodecContext->get_format = nullptr;
-			// Reopen codec context without HW
-			avcodec_free_context(&mVideoCodecContext);
-			mVideoCodecContext = avcodec_alloc_context3(mVideoCodec);
-			avcodec_parameters_to_context(mVideoCodecContext, mVideoStream->codecpar);
-			mVideoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
-			AVDictionary *swThread = nullptr;
-			av_dict_set(&swThread, "threads", "auto", 0);
-			errorCode = avcodec_open2(mVideoCodecContext, mVideoCodec, &swThread);
-			av_dict_free(&swThread);
-			if (errorCode < 0) {
-				LOG_ERROR("[DecoderFFmpeg] SW fallback codec open failed: ", errorCode);
-				return false;
+		// Only set up HW pipeline if a matching format was found
+		if (hw_pix_fmt != AV_PIX_FMT_NONE) {
+			mVideoCodecContext->get_format = get_hw_format;
+			if (hw_decoder_init(mVideoCodecContext, type) < 0) {
+				LOG("[DecoderFFmpeg] HW device init failed — falling back to SW decode");
+				hw_pix_fmt = AV_PIX_FMT_NONE;
+				mVideoCodecContext->get_format = nullptr;
+				// Reopen codec context without HW
+				avcodec_free_context(&mVideoCodecContext);
+				mVideoCodecContext = avcodec_alloc_context3(mVideoCodec);
+				avcodec_parameters_to_context(mVideoCodecContext, mVideoStream->codecpar);
+				mVideoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
+				errorCode = avcodec_open2(mVideoCodecContext, mVideoCodec, &autoThread);
+				if (errorCode < 0) {
+					LOG_ERROR("[DecoderFFmpeg] SW fallback codec open failed: ", errorCode);
+					return false;
+				}
 			}
 		}
-	}
+		av_dict_free(&autoThread);
 #endif
 
 
@@ -614,6 +614,11 @@ void DecoderFFmpeg::destroy() {
 		swr_free(&mSwrContext);
 		mSwrContext = nullptr;
 	}
+
+	if (mSwsContext) { 
+		sws_freeContext(mSwsContext); 
+		mSwsContext = nullptr;
+	 }
 	
 	flushBuffer(&mVideoFrames, &mVideoMutex);
 	flushBuffer(&mAudioFrames, &mAudioMutex);
@@ -771,19 +776,22 @@ void DecoderFFmpeg::updateVideoFrame() {
 	av_image_fill_arrays(dstFrame->data, dstFrame->linesize, buffer->data, dstFormat, width, height, 1);
 	dstFrame->buf[0] = buffer;
 
-	SwsContext* conversion = sws_getContext(width,
-		height,
-		(AVPixelFormat)srcFrame->format,
-		width,
-		height,
-		dstFormat,
-		SWS_POINT | SWS_FULL_CHR_H_INT | SWS_ACCURATE_RND,
-		nullptr,
-		nullptr,
-		nullptr);
+	if (mSwsContext == nullptr || 
+		mSwsWidth != width || 
+		mSwsHeight != height || 
+		mSwsSrcFormat != (AVPixelFormat)srcFrame->format) {
+		if (mSwsContext) sws_freeContext(mSwsContext);
+		mSwsContext = sws_getContext(
+			width, height, (AVPixelFormat)srcFrame->format,
+			width, height, dstFormat,
+			SWS_POINT | SWS_FULL_CHR_H_INT | SWS_ACCURATE_RND,
+			nullptr, nullptr, nullptr);
+		mSwsWidth = width;
+		mSwsHeight = height;
+		mSwsSrcFormat = (AVPixelFormat)srcFrame->format;
+	}
 	
-	sws_scale(conversion, srcFrame->data, srcFrame->linesize, 0, height, dstFrame->data, dstFrame->linesize);
-	sws_freeContext(conversion);
+	sws_scale(mSwsContext, srcFrame->data, srcFrame->linesize, 0, height, dstFrame->data, dstFrame->linesize);
 	av_frame_copy_props(dstFrame, srcFrame);
 
 	dstFrame->format = dstFormat;

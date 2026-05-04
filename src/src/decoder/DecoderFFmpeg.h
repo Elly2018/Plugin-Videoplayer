@@ -90,6 +90,9 @@ private:
 	uint32_t mSubtitlePreloadMax;
 
 	SwrContext*	mSwrContext;
+	SwsContext* mSwsContext;
+	int32_t mSwsWidth, mSwsHeight;
+	AVPixelFormat mSwsSrcFormat;
 	int32_t initSwrContext();
 
 	VideoInfo	mVideoInfo{};
