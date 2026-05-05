@@ -6,4 +6,17 @@
 #include <cstddef>
 
 extern "C" {
+//
+// 
+// Utils
+//
+//
+///
+/// Remove all decoder, even if the decoder is in work
+///
+void nativeCleanAllEncoders();
+///
+/// Remove all destroyed decoder
+///
+void nativeCleanDestroyedEncoders();
 }

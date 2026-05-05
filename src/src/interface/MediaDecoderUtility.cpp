@@ -59,7 +59,7 @@ void removeVideoContext(int32_t id) {
 	}
 }
 
-void nativeCleanAll() {
+void nativeCleanAllDecoders() {
     std::list<int> idList;
     for(auto videoCtx : videoContexts) {
         idList.push_back(videoCtx->id);

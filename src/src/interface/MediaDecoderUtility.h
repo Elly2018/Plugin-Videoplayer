@@ -14,7 +14,7 @@ extern "C" {
 ///
 /// Remove all decoder, even if the decoder is in work
 ///
-void nativeCleanAll();
+void nativeCleanAllDecoders();
 ///
 /// Remove all destroyed decoder
 ///
