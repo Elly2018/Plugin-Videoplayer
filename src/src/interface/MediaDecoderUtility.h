@@ -11,16 +11,22 @@ extern "C" {
 // Utils
 //
 //
+///
+/// Remove all decoder, even if the decoder is in work
+///
 void nativeCleanAll();
+///
+/// Remove all destroyed decoder
+///
 void nativeCleanDestroyedDecoders();
 //
 //
 //	Decoder
 //
 //
-/*
-  Create a decoder instance, and push it to the decoder list
-*/
+///
+/// Create a decoder instance, and push it to the decoder list
+///
 int32_t nativeCreateDecoder(const char* filePath, int32_t& id);
 int32_t nativeCreateDecoderAsync(const char* filePath, int32_t& id);
 int32_t nativeGetDecoderState(int32_t id);
