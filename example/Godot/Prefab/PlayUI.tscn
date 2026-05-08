@@ -106,6 +106,7 @@ placeholder_text = "Media URL"
 scroll_past_end_of_file = true
 minimap_draw = true
 minimap_width = -500
+caret_multiple = false
 
 [node name="MenuBar" type="MenuBar" parent="."]
 layout_mode = 1

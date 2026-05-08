@@ -4,7 +4,7 @@ signal UpdateTime(m:float)
 
 @export var play_on_start: bool;
 @export var loop: bool;
-@export var uri: String = "/home/funique0807/Videos/test.mp4";
+@export var uri: String = "Resource/2d.webm";
 @export var geo: GeometryInstance3D;
 @export var texture_rect: TextureRect;
 
@@ -12,21 +12,7 @@ signal UpdateTime(m:float)
 @export var player: FFmpegMediaPlayer;
 @export var audio_stream: AudioStreamPlayer;
 
-# /home/funique0807/Videos/test.mp4
-# Resource/sbs_vr.webm
-
-# Big Buck mp4
-# http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4
-# Big Buck 480p
-# https://test-streams.mux.dev/x36xhzz/url_6/193039199_mp4_h264_aac_hq_7.m3u8
-# Big Buck ABR
-# https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
-# Elephants Dream
-# http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4
-# Tear of steel (audio channel test)
-# https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4
-# Bitbop ball for sync test
-# http://devimages.apple.com/iphone/samples/bipbop/bipbopall.m3u8
+# https://vrvod-funique.cdn.hinet.net/Funiqueplus/Q2/0020_PTS_FROG/mono/v1/master.m3u8?token=p41OuWAg16PCsX43AwdvqQ&expire=1795564800
 var mat: Material = null
 var aspect: float = 1.0
 var rootInterface:Control = null

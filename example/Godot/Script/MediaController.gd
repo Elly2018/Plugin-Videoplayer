@@ -61,5 +61,5 @@ func OnSeek(v:float):
 	emit_signal("Seek", v);
 
 func UpdateTimer(current:float, max:float):
-	time_display.text = get_time_format(current) + "/" + get_time_format(max)
+	time_display.text = get_time_format(current) + "/" + get_time_format(max);
 	slider.set_value_no_signal(current / max);
