@@ -46,7 +46,7 @@ func _ready():
 
 func _process(delta):
 	_update_size();
-	emit_signal("UpdateTime", player.get_playback_position() / player.get_length())
+	emit_signal("UpdateTime", player.get_playback_position(), player.get_length())
 
 func _update_size():
 	aspect = float(current_size.x) / float(current_size.y);
