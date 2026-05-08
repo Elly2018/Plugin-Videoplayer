@@ -21,6 +21,12 @@
 #include <godot_cpp/classes/audio_stream_generator_playback.hpp>
 #include <godot_cpp/classes/global_constants.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
+#include <godot_cpp/classes/rendering_server.hpp>
+#include <godot_cpp/classes/rendering_device.hpp>
+#include <godot_cpp/classes/rd_texture_format.hpp>
+#include <godot_cpp/classes/rd_texture_view.hpp>
+#include <godot_cpp/classes/placeholder_texture2d.hpp>
+#include <godot_cpp/classes/texture_rect.hpp>
 #include <godot_cpp/classes/node.hpp>
 
 using namespace godot;
@@ -201,11 +207,7 @@ private:
 	/// 
 	/// The texture we're sending to GDscript, user should take this resource and apply to the material it want
 	/// 
-	Ref<ImageTexture> texture;
-	/// 
-	/// The raw image data, video player will write the bytes data to it
-	/// 
-	Ref<Image> image;
+	Ref<PlaceholderTexture2D> texture;
 	/// 
 	/// User select path
 	/// 

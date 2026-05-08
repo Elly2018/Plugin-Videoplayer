@@ -9,6 +9,8 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
+RenderingDevice *rd = RenderingServer::get_singleton()->get_rendering_device();
+
 void FFmpegMediaPlayer::_init_media() {
 	int32_t li = -1;
 	int32_t count = 0;
@@ -163,8 +165,6 @@ void FFmpegMediaPlayer::stop() {
 
 	PackedByteArray empty = PackedByteArray();
 	empty.append(0); empty.append(0); empty.append(0);
-	image->call_deferred("set_data", 1, 1, false, Image::FORMAT_RGB8, empty);
-	texture->set_deferred("image", image);
 	emit_signal("video_update", texture, Vector2i(1, 1));
 
 
@@ -275,11 +275,27 @@ void FFmpegMediaPlayer::_process(float delta) {
 					image_data.resize(data_size);
 					memcpy(image_data.ptrw(), frame_data, data_size);
 					//memmove(image_data.ptrw(), frame_data, data_size);
-					LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] data size: ", data_size, ", actual frame size: ", image_data);
-					image->call_deferred("set_data", width, height, false, Image::FORMAT_RGB8, image_data);
-					texture->set_deferred("image", image);
-					emit_signal("video_update", texture, Vector2i(width, height));
 					
+					LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] data size: ", data_size, ", actual frame size: ", image_data);
+					texture->set_size(Vector2(width, height));
+
+					RenderingServer *rs = RenderingServer::get_singleton();
+					RenderingDevice *rd = rs->get_rendering_device();
+
+					Ref<RDTextureFormat> tf;
+					tf.instantiate();
+					tf->set_width(width);
+					tf->set_height(height);
+					tf->set_format(RenderingDevice::DATA_FORMAT_R8G8B8A8_UNORM); 
+					tf->set_usage_bits(RenderingDevice::TEXTURE_USAGE_SAMPLING_BIT | 
+									RenderingDevice::TEXTURE_USAGE_CAN_UPDATE_BIT | 
+									RenderingDevice::TEXTURE_USAGE_CAN_COPY_TO_BIT);
+
+					RID rd_tex_rid = rd->texture_create(tf, Ref<RDTextureView>(), TypedArray<PackedByteArray>());
+					rd->texture_update(rd_tex_rid, 0, image_data);
+					rs->texture_replace(texture->get_rid(), rd_tex_rid);
+
+					emit_signal("video_update", texture, Vector2i(width, height));
 					first_frame_v = false;
 
 					nativeReleaseVideoFrame(id);
@@ -454,14 +470,11 @@ String FFmpegMediaPlayer::get_format() const
 	return format;
 }
 FFmpegMediaPlayer::FFmpegMediaPlayer() : player(nullptr) {
-	image = Image::create(1, 1, false, Image::FORMAT_RGB8);
-	texture = ImageTexture::create_from_image(image);
+	texture.instantiate();
 	audioFrame = List<Vector2>();
 
 	PackedByteArray empty = PackedByteArray();
 	empty.append(0); empty.append(0); empty.append(0);
-	image->call_deferred("set_data", 1, 1, false, Image::FORMAT_RGB8, empty);
-	texture->set_deferred("image", image);
 	emit_signal("video_update", texture, Vector2i(1, 1));
 
 	LOG("[FFmpegMediaPlayer] FFmpegMediaPlayer instance created.");

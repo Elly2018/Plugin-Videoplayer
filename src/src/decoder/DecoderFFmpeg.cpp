@@ -755,7 +755,9 @@ void DecoderFFmpeg::updateVideoFrame() {
 
 	AVPixelFormat dstFormat = AV_PIX_FMT_RGB24;
 #ifdef DECODER_HW
-	if(hw_pix_fmt != AV_PIX_FMT_NONE) dstFormat = hw_pix_fmt;
+	if(hw_pix_fmt != AV_PIX_FMT_NONE) {
+		dstFormat = hw_pix_fmt;
+	}
 #endif
 	LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Video format. w: ", width, ", h: ", height, ", f: ", dstFormat);
 	AVFrame* dstFrame = av_frame_alloc();
