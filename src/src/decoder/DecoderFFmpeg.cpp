@@ -11,13 +11,6 @@ extern "C" {
 	#include <libavutil/hwcontext.h>
 }
 
-#ifdef UNITY
-//#define COLORPIX AV_PIX_FMT_YUV420P
-#define COLORPIX AV_PIX_FMT_RGB24
-#else
-#define COLORPIX AV_PIX_FMT_RGB24
-#endif
-
 #ifdef DECODER_HW
 static AVBufferRef* hw_device_ctx = nullptr;
 static enum AVPixelFormat hw_pix_fmt = AV_PIX_FMT_NONE;
@@ -199,6 +192,7 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
         if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
             config->device_type == type) {
             hw_pix_fmt = config->pix_fmt;
+			LOG("[DecoderFFmpeg] hw_pix_fmt: ", (int32_t)hw_pix_fmt);
             break;
         }
     }
@@ -761,7 +755,10 @@ void DecoderFFmpeg::updateVideoFrame() {
 	int width = srcFrame->width;
 	int height = srcFrame->height;
 
-	const AVPixelFormat dstFormat = COLORPIX;
+	AVPixelFormat dstFormat = AV_PIX_FMT_RGB24;
+#ifdef DECODER_HW
+	if(hw_pix_fmt != AV_PIX_FMT_NONE) dstFormat = hw_pix_fmt;
+#endif
 	LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Video format. w: ", width, ", h: ", height, ", f: ", dstFormat);
 	AVFrame* dstFrame = av_frame_alloc();
 	av_frame_copy_props(dstFrame, srcFrame);
