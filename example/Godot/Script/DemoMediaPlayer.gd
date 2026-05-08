@@ -1,5 +1,7 @@
 class_name DemoMediaPlayer extends Node
 
+signal UpdateTime(m:float)
+
 @export var play_on_start: bool;
 @export var loop: bool;
 @export var uri: String = "/home/funique0807/Videos/test.mp4";
@@ -44,6 +46,7 @@ func _ready():
 
 func _process(delta):
 	_update_size();
+	emit_signal("UpdateTime", player.get_playback_position() / player.get_length())
 
 func _update_size():
 	aspect = float(current_size.x) / float(current_size.y);

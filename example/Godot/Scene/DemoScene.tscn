@@ -25,6 +25,7 @@ uri = "Resource/2d.webm"
 [node name="PlayUI" parent="." instance=ExtResource("3_5iufy")]
 seek_time = 20.0
 
+[connection signal="UpdateTime" from="Plane" to="PlayUI" method="UpdateTimer"]
 [connection signal="Seek" from="PlayUI" to="Plane" method="quick_seek"]
 [connection signal="SeekBackward" from="PlayUI" to="Plane" method="quick_seek_backward"]
 [connection signal="SeekForward" from="PlayUI" to="Plane" method="quick_seek_forward"]

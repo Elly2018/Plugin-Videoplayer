@@ -52,3 +52,5 @@ func MenuTrigger():
 func OnSeek(v:float):
 	emit_signal("Seek", v);
 
+func UpdateTimer(v:float):
+	slider.set_value_no_signal(v)
