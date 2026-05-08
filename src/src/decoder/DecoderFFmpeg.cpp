@@ -217,12 +217,11 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		av_dict_set(&autoThread, "threads", "auto", 0);
 		av_dict_set(&autoThread, "flags", "+copy_opaque", AV_DICT_MULTIKEY);
 		mVideoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
-		errorCode = avcodec_open2(mVideoCodecContext, mVideoCodec, &autoThread);
 #ifdef DECODER_HW
 		// Only set up HW pipeline if a matching format was found
 		if (hw_pix_fmt != AV_PIX_FMT_NONE) {
 			mVideoCodecContext->get_format = get_hw_format;
-			if (hw_decoder_init(mVideoCodecContext, type) < 0) {
+			if (hw_decoder_init(mVideoCodecContext, type) >= 0) {
 				hw_pix_fmt = AV_PIX_FMT_NONE;
 				mVideoCodecContext->get_format = nullptr;
 				// Reopen codec context without HW
@@ -230,7 +229,6 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 				mVideoCodecContext = avcodec_alloc_context3(mVideoCodec);
 				avcodec_parameters_to_context(mVideoCodecContext, mVideoStream->codecpar);
 				mVideoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
-				errorCode = avcodec_open2(mVideoCodecContext, mVideoCodec, &autoThread);
 				if (errorCode < 0) {
 					LOG_ERROR("[DecoderFFmpeg] SW fallback codec open failed: ", errorCode);
 					return false;
@@ -239,9 +237,9 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 				LOG("[DecoderFFmpeg] HW device init failed — falling back to SW decode");
 			}
 		}
-		av_dict_free(&autoThread);
 #endif
-
+		errorCode = avcodec_open2(mVideoCodecContext, mVideoCodec, &autoThread);
+		av_dict_free(&autoThread);
 
 		if (errorCode < 0) {
 			LOG("[DecoderFFmpeg] Could not open video codec: ", errorCode);
@@ -757,7 +755,7 @@ void DecoderFFmpeg::updateVideoFrame() {
 
 	AVPixelFormat dstFormat = AV_PIX_FMT_RGB24;
 #ifdef DECODER_HW
-	//if(hw_pix_fmt != AV_PIX_FMT_NONE) dstFormat = hw_pix_fmt;
+	if(hw_pix_fmt != AV_PIX_FMT_NONE) dstFormat = hw_pix_fmt;
 #endif
 	LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Video format. w: ", width, ", h: ", height, ", f: ", dstFormat);
 	AVFrame* dstFrame = av_frame_alloc();

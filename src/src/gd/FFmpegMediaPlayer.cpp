@@ -338,6 +338,7 @@ void FFmpegMediaPlayer::_physics_process(float delta) {
 		*/
 		bool ready = false;
 		double frameTime = nativeGetAudioData(id, ready, &raw_audio_data, audio_size, channel, byte_per_sample);
+		LOG_VERBOSE("nativeGetAudioData: ", frameTime);
 		if (clock == 1) {
 			video_current_time = frameTime;
 			nativeSetVideoTime(id, video_current_time);

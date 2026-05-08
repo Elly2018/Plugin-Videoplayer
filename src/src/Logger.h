@@ -7,7 +7,7 @@
 #define BASE_LOG(X, ...) (std::string("[EllyVideoPlayer_Native]") + std::string(X) + std::string("\n")).c_str() , __VA_ARGS__
 
 #define ENABLE_LOG
-#define ENABLE_LOG_VERBOSE
+//#define ENABLE_LOG_VERBOSE
 
 #ifdef ENABLE_LOG
 	#define LOG(X, ...) std::fprintf(stdout, BASE_LOG(X, __VA_ARGS__))
