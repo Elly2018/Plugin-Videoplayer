@@ -8,8 +8,10 @@ signal ToLoad(p:String)
 signal ToAudio(p:float)
 signal SeekForward(m:float)
 signal SeekBackward(m:float)
+signal Seek(m:float)
 
 @export var input_uri: TextEdit
+@export var slider:HSlider
 @export var Con: Control
 @export var seek_time: float
 
@@ -46,3 +48,7 @@ func OnAudio(v:float):
 
 func MenuTrigger():
 	Con.visible = !Con.visible;
+
+func OnSeek(v:float):
+	emit_signal("Seek", v);
+

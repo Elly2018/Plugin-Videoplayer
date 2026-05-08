@@ -118,3 +118,9 @@ func quick_seek_backward(m:float):
 	var currentTime = player.get_playback_position();
 	var t = currentTime - m;
 	player.seek(t);
+
+func quick_seek(m:float):
+	var l = player.get_length();
+	print("l: ", l);
+	print("m: ", m);
+	player.seek(l * m);
