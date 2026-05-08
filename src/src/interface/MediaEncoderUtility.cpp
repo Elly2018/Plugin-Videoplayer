@@ -25,12 +25,12 @@ typedef struct EVideoContext {
 									//	Usually used for AV sync problem, in pure audio case, it should be discarded.
 } EMediaContext;
 
-std::list<std::shared_ptr<EMediaContext>> videoContexts;
-typedef std::list<std::shared_ptr<EMediaContext>>::iterator VideoContextIter;
+std::list<std::shared_ptr<EMediaContext>> evideoContexts;
+typedef std::list<std::shared_ptr<EMediaContext>>::iterator EVideoContextIter;
 
 void nativeCleanAllEncoders() {
     std::list<int> idList;
-    for(auto videoCtx : videoContexts) {
+    for(auto videoCtx : evideoContexts) {
         idList.push_back(videoCtx->id);
     }
 
@@ -41,7 +41,7 @@ void nativeCleanAllEncoders() {
 
 void nativeCleanDestroyedEncoders() {
     std::list<int> idList;
-    for(auto videoCtx : videoContexts) {
+    for(auto videoCtx : evideoContexts) {
         //if (videoCtx->destroying && !videoCtx->avhandler->isDecoderRunning() && !videoCtx->initThreadRunning) {
             //idList.push_back(videoCtx->id);
         //}
