@@ -11,7 +11,7 @@ using namespace godot;
 #endif
 
 #define ENABLE_LOG
-#define ENABLE_LOG_VERBOSE
+//#define ENABLE_LOG_VERBOSE
 
 #ifdef ENABLE_LOG
 	#ifdef GODOT
