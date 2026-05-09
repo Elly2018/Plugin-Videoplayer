@@ -163,7 +163,7 @@ void FFmpegMediaPlayer::stop() {
 
 	PackedByteArray empty = PackedByteArray();
 	empty.append(0); empty.append(0); empty.append(0);
-	emit_signal("video_update", texture, Vector2i(1, 1));
+	emit_signal("video_update", imageTexture, Vector2i(1, 1));
 
 
 	LOG("start change to INITIALIZED");
@@ -270,21 +270,23 @@ void FFmpegMediaPlayer::_process(float delta) {
 
 				double frameTime = nativeGrabVideoFrame(id, &frame_data, sw, frame_ready, width, height);
 				if (frame_ready) {
+					LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] frame ready");
 					if(sw){
-						texture->set_size(Vector2(width, height));
-						Ref<Image> image = texture->get_image();
+						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] yes sw");
 						data_size = width * height * 3;
 						PackedByteArray image_data;
 						image_data.resize(data_size);
 						memcpy(image_data.ptrw(), frame_data, data_size);
-						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] yes sw, data size: ", data_size);
-						image->call_deferred("set_data", width, height, false, Image::Format::FORMAT_RGB8, image_data);
-						texture->set_deferred("image", image);
+						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] data size: ", data_size);
+						image->call_deferred("set_data", width, height, false, Image::FORMAT_RGB8, image_data);
+						imageTexture->set_deferred("image", image);
+						emit_signal("video_update", imageTexture, Vector2i(width, height));
 					}else{
+						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] no sw");
 						RenderingServer *rs = RenderingServer::get_singleton();
 						RenderingDevice *rd = rs->get_rendering_device();
 
-						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] no sw, data size: ", data_size);
+						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] data size: ", data_size);
 						texture->set_size(Vector2(width, height));
 						Ref<RDTextureFormat> tf;
 						tf.instantiate();
@@ -297,8 +299,8 @@ void FFmpegMediaPlayer::_process(float delta) {
 
 						RID rd_tex_rid = rd->texture_create(tf, Ref<RDTextureView>(), TypedArray<PackedByteArray>());
 						rs->texture_replace(texture->get_rid(), rd_tex_rid);
+						emit_signal("video_update", texture, Vector2i(width, height));
 					}
-					emit_signal("video_update", texture, Vector2i(width, height));
 					first_frame_v = false;
 
 					nativeReleaseVideoFrame(id);
@@ -473,6 +475,8 @@ String FFmpegMediaPlayer::get_format() const
 	return format;
 }
 FFmpegMediaPlayer::FFmpegMediaPlayer() : player(nullptr) {
+	image = Image::create(1, 1, false, Image::FORMAT_RGB8);
+	imageTexture = ImageTexture::create_from_image(image);
 	texture.instantiate();
 	audioFrame = List<Vector2>();
 

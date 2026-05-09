@@ -208,6 +208,8 @@ private:
 	/// The texture we're sending to GDscript, user should take this resource and apply to the material it want
 	/// 
 	Ref<PlaceholderTexture2D> texture;
+	Ref<Image> image;
+	Ref<ImageTexture> imageTexture;
 	/// 
 	/// User select path
 	/// 
@@ -226,6 +228,10 @@ private:
 	/// 
 	State state = State::UNINITIALIZED;
 
+	// GPU Handles
+    RID rd_tex_rid; // RenderingDevice (Vulkan memory)
+    RID rs_tex_rid; // RenderingServer (Godot Texture wrapper)
+	
 	bool first_frame_v = true;
 	bool first_frame_a = true;
 	bool paused = false;
