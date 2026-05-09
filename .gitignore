@@ -3,6 +3,8 @@
 *.os
 *.vs
 
+example/Godot/Resource/*.mp4
+
 # Solutions
 build_**/
 reference

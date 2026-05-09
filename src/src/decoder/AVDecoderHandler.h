@@ -5,6 +5,9 @@
 #include <memory>
 #include "IDecoder.h"
 
+///
+/// Handle the video player
+///
 class AVDecoderHandler {
 public:
 	AVDecoderHandler();
