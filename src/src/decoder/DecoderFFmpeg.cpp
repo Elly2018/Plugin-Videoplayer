@@ -204,40 +204,49 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 	} else {
 		mVideoInfo.isEnabled = true;
 		mVideoStream = mAVFormatContext->streams[st_index[AVMEDIA_TYPE_VIDEO]];
-        mVideoCodecContext = avcodec_alloc_context3(mVideoCodec);
-		if (!mVideoCodecContext) return false;
-        mVideoCodecContext->refs = 1;
-        int32_t ret = avcodec_parameters_to_context(mVideoCodecContext, mVideoStream->codecpar);
-		LOG("[DecoderFFmpeg] Video codec id: ", mVideoCodecContext->codec_id);
-		if (mVideoCodec == nullptr) {
-			LOG("Video codec not available.");
-			return false;
-		}
-		AVDictionary *autoThread = nullptr;
-		av_dict_set(&autoThread, "threads", "auto", 0);
-		av_dict_set(&autoThread, "flags", "+copy_opaque", AV_DICT_MULTIKEY);
-		mVideoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
 #ifdef DECODER_HW
 		// Only set up HW pipeline if a matching format was found
 		if (hw_pix_fmt != AV_PIX_FMT_NONE) {
-			mVideoCodecContext->get_format = get_hw_format;
 			if (hw_decoder_init(mVideoCodecContext, type) >= 0) {
 				hw_pix_fmt = AV_PIX_FMT_NONE;
-				mVideoCodecContext->get_format = nullptr;
-				// Reopen codec context without HW
-				avcodec_free_context(&mVideoCodecContext);
 				mVideoCodecContext = avcodec_alloc_context3(mVideoCodec);
-				avcodec_parameters_to_context(mVideoCodecContext, mVideoStream->codecpar);
-				mVideoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
-				if (errorCode < 0) {
-					LOG_ERROR("[DecoderFFmpeg] SW fallback codec open failed: ", errorCode);
+				mVideoCodecContext->get_format = get_hw_format;
+				mVideoCodecContext->refs = 1;
+				int32_t ret = avcodec_parameters_to_context(mVideoCodecContext, mVideoStream->codecpar);
+				if (mVideoCodec == nullptr) {
+					LOG("Video codec not available.");
+					return false;
+				}
+				mVideoCodec = avcodec_find_decoder(mVideoCodecContext->codec_id);
+				if (mVideoCodec == nullptr) {
+					LOG("Video codec not available.");
 					return false;
 				}
 			}else{
 				LOG("[DecoderFFmpeg] HW device init failed — falling back to SW decode");
 			}
-		}
+		} else 
 #endif
+		{
+			mVideoCodecContext = avcodec_alloc_context3(NULL);
+			if (!mVideoCodecContext) return false;
+			mVideoCodecContext->refs = 1;
+			int32_t ret = avcodec_parameters_to_context(mVideoCodecContext, mVideoStream->codecpar);
+			LOG("[DecoderFFmpeg] Video codec id: ", mVideoCodecContext->codec_id);
+			if (mVideoCodec == nullptr) {
+				LOG("Video codec not available.");
+				return false;
+			}
+			mVideoCodec = avcodec_find_decoder(mVideoCodecContext->codec_id);
+			if (mVideoCodec == nullptr) {
+				LOG("Video codec not available.");
+				return false;
+			}
+		}
+		AVDictionary *autoThread = nullptr;
+		av_dict_set(&autoThread, "threads", "auto", 0);
+		av_dict_set(&autoThread, "flags", "+copy_opaque", AV_DICT_MULTIKEY);
+		mVideoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
 		errorCode = avcodec_open2(mVideoCodecContext, mVideoCodec, &autoThread);
 		av_dict_free(&autoThread);
 
@@ -298,16 +307,16 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		mAudioInfo.currentIndex = st_index[AVMEDIA_TYPE_AUDIO];
 	}
 
-	std::vector<int> videoIndex = std::vector<int>();
-	std::vector<int> audioIndex = std::vector<int>();
-	std::vector<int> subtitleIndex = std::vector<int>();
+	videoIndex = std::vector<int>();
+	audioIndex = std::vector<int>();
+	subtitleIndex = std::vector<int>();
 	getListType(mAVFormatContext, videoIndex, audioIndex, subtitleIndex);
 	mVideoInfo.otherIndex = videoIndex.data();
-	mVideoInfo.otherIndexCount = videoIndex.size();
+	mVideoInfo.otherIndexCount = (int32_t)videoIndex.size();
 	mAudioInfo.otherIndex = audioIndex.data();
-	mAudioInfo.otherIndexCount = audioIndex.size();
+	mAudioInfo.otherIndexCount = (int32_t)audioIndex.size();
 	mSubtitleInfo.otherIndex = subtitleIndex.data();
-	mSubtitleInfo.otherIndexCount = subtitleIndex.size();
+	mSubtitleInfo.otherIndexCount = (int32_t)subtitleIndex.size();
 
 	LOG("[DecoderFFmpeg] Finished initialization");
 	mIsInitialized = true;
@@ -463,7 +472,11 @@ double DecoderFFmpeg::getVideoFrame(void** frameData, int32_t& width, int32_t& h
 	*frameData = frame->data[0];
 	width = frame->width;
 	height = frame->height;
+#ifdef DECODER_HW
 	sw = (hw_pix_fmt == AV_PIX_FMT_RGB24 || hw_pix_fmt == AV_PIX_FMT_NONE);
+#else
+	sw = true;
+#endif
 
 	int64_t timeStamp = frame->pts;
 	double timeInSec = av_q2d(mVideoStream->time_base) * timeStamp;

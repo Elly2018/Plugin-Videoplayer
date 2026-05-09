@@ -123,24 +123,21 @@ bool AVDecoderHandler::getOtherIndex(MediaType type, int32_t& li, int32_t& count
 			IDecoder::VideoInfo info = getVideoInfo();
 			count = info.otherIndexCount;
 			current = info.currentIndex;
-			//memcpy(li, info.otherIndex, count * sizeof(int));
-			mempcpy(&li, info.otherIndex, sizeof(int32_t));
+			li = (info.otherIndex != nullptr && count > 0) ? info.otherIndex[0] : -1;
 		} return true;
 	case AVDecoderHandler::AUDIO:
 		{
 			IDecoder::AudioInfo info = getAudioInfo();
 			count = info.otherIndexCount;
 			current = info.currentIndex;
-			//memcpy(li, info.otherIndex, count * sizeof(int));
-			mempcpy(&li, info.otherIndex, sizeof(int32_t));
+			li = (info.otherIndex != nullptr && count > 0) ? info.otherIndex[0] : -1;
 		} return true;
 	case AVDecoderHandler::SUBTITLE:
 		{
 			IDecoder::SubtitleInfo info = getSubtitleInfo();
 			count = info.otherIndexCount;
 			current = info.currentIndex;
-			//memcpy(li, info.otherIndex, count * sizeof(int));
-			mempcpy(&li, info.otherIndex, sizeof(int32_t));
+			li = (info.otherIndex != nullptr && count > 0) ? info.otherIndex[0] : -1;
 		} return true;
 	}
 

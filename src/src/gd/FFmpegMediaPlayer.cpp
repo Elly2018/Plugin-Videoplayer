@@ -9,8 +9,6 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-RenderingDevice *rd = RenderingServer::get_singleton()->get_rendering_device();
-
 void FFmpegMediaPlayer::_init_media() {
 	int32_t li = -1;
 	int32_t count = 0;
@@ -82,7 +80,7 @@ void FFmpegMediaPlayer::load_async()
 }
 
 bool FFmpegMediaPlayer::load_path(String _path) {
-	LOG("start load path: ", _path);
+	LOG("[FFmpegMediaPlayer] start load path sync: ", _path);
 	if (player == nullptr) {
 		LOG_ERROR("You must register the player instance first");
 		return false;
@@ -113,7 +111,7 @@ bool FFmpegMediaPlayer::load_path(String _path) {
 }
 
 void FFmpegMediaPlayer::load_path_async(String _path) {
-	LOG("[FFmpegMediaPlayer] start load path: ", _path);
+	LOG("[FFmpegMediaPlayer] start load path async: ", _path);
 	int32_t d_state = nativeGetDecoderState(id);
 	if (d_state > 1) {
 		LOG_ERROR("Decoder state: ", d_state);
@@ -270,28 +268,23 @@ void FFmpegMediaPlayer::_process(float delta) {
 				bool frame_ready = false;
 				bool sw = false;
 
-				if (clock == 1 && first_frame_a) {
-					// Audio master clock but no audio yet — use wall clock to unblock video grab
-					double wall = Time::get_singleton()->get_unix_time_from_system() - global_start_time;
-					nativeSetVideoTime(id, (float)wall);
-				}
-
 				double frameTime = nativeGrabVideoFrame(id, &frame_data, sw, frame_ready, width, height);
 				if (frame_ready) {
 					if(sw){
+						texture->set_size(Vector2(width, height));
 						Ref<Image> image = texture->get_image();
 						data_size = width * height * 3;
 						PackedByteArray image_data;
 						image_data.resize(data_size);
 						memcpy(image_data.ptrw(), frame_data, data_size);
-						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] data size: ", data_size, ", actual frame size: ", image_data);
-						texture->set_size(Vector2(width, height));
-						image->set_data(width, height, false, Image::Format::FORMAT_RGB8, image_data);
+						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] yes sw, data size: ", data_size);
+						image->call_deferred("set_data", width, height, false, Image::Format::FORMAT_RGB8, image_data);
+						texture->set_deferred("image", image);
 					}else{
 						RenderingServer *rs = RenderingServer::get_singleton();
 						RenderingDevice *rd = rs->get_rendering_device();
 
-						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] data size: ", data_size, ", actual frame size: ", image_data);
+						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] no sw, data size: ", data_size);
 						texture->set_size(Vector2(width, height));
 						Ref<RDTextureFormat> tf;
 						tf.instantiate();
@@ -525,6 +518,6 @@ void FFmpegMediaPlayer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_format", "second"), &FFmpegMediaPlayer::set_format);
 	ClassDB::bind_method(D_METHOD("get_format"), &FFmpegMediaPlayer::get_format);
 
-	ADD_SIGNAL(MethodInfo("video_update", PropertyInfo(Variant::RID, "image", PROPERTY_HINT_RESOURCE_TYPE, "Texture2D"), PropertyInfo(Variant::VECTOR2I, "size")));
+	ADD_SIGNAL(MethodInfo("video_update", PropertyInfo(Variant::RID, "texture2D", PROPERTY_HINT_RESOURCE_TYPE, "Texture2D"), PropertyInfo(Variant::VECTOR2I, "size")));
 	ADD_SIGNAL(MethodInfo("audio_update", PropertyInfo(Variant::PACKED_FLOAT32_ARRAY, "sample"), PropertyInfo(Variant::INT, "size"), PropertyInfo(Variant::INT, "channel")));
 }

@@ -78,6 +78,9 @@ private:
 	std::queue<AVFrame*> mVideoFrames;
 	std::queue<AVFrame*> mAudioFrames;
 	std::queue<AVFrame*> mSubtitleFrames;
+	std::vector<int> videoIndex = std::vector<int>();
+	std::vector<int> audioIndex = std::vector<int>();
+	std::vector<int> subtitleIndex = std::vector<int>();
 	uint32_t mVideoBuffMax;
 	uint32_t mAudioBuffMax;
 	uint32_t mSubtitleBuffMax;

@@ -116,8 +116,7 @@ int32_t nativeCreateDecoderAsync(const char *filePath, int32_t &id)
 	videoCtx->isContentReady = false;
 
 	videoCtx->initThreadRunning = true;
-	videoCtx->initThread = std::thread([videoCtx]()
-									   {
+	videoCtx->initThread = std::thread([videoCtx](){
 		videoCtx->avhandler->init(videoCtx->path.c_str());
         videoCtx->initThreadRunning = false; });
 
