@@ -269,6 +269,13 @@ void FFmpegMediaPlayer::_process(float delta) {
 				void *frame_data = nullptr;
 				bool frame_ready = false;
 				bool sw = false;
+
+				if (clock == 1 && first_frame_a) {
+					// Audio master clock but no audio yet — use wall clock to unblock video grab
+					double wall = Time::get_singleton()->get_unix_time_from_system() - global_start_time;
+					nativeSetVideoTime(id, (float)wall);
+				}
+
 				double frameTime = nativeGrabVideoFrame(id, &frame_data, sw, frame_ready, width, height);
 				if (frame_ready) {
 					if(sw){
