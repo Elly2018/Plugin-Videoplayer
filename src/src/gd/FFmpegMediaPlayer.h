@@ -189,6 +189,8 @@ private:
 	/// To fill the buffer of audio stream (audio stream generator)
 	/// 
 	void audio_init();
+	void update_video(float delta);
+	void update_audio(float delta);
 
 	/// 
 	/// The audio player component in the scene,

@@ -69,6 +69,203 @@ void FFmpegMediaPlayer::audio_init()
 	}
 }
 
+void FFmpegMediaPlayer::update_video(float delta){
+	switch (state) {
+		default:
+			break;
+
+		case State::LOADING: {
+			if (nativeGetDecoderState(id) == 1) {
+				_init_media();
+				play();
+				LOG("[FFmpegMediaPlayer] Loading successful");
+			} else if (nativeGetDecoderState(id) == -1) {
+				state = State::UNINITIALIZED;
+				LOG_ERROR("[FFmpegMediaPlayer | ERROR] Main loop, async loading failed, nativeGetDecoderState == -1");
+				LOG_ERROR("[FFmpegMediaPlayer | ERROR] Init failed");
+			}
+		} break;
+
+		case State::BUFFERING: {
+			if (nativeIsVideoBufferFull(id) || nativeIsEOF(id)) {
+				global_start_time = Time::get_singleton()->get_unix_time_from_system() - hang_time;
+				state = State::DECODING;
+				audioFrame.clear();
+			}
+		} break;
+
+		case State::SEEK: {
+			if (nativeIsSeekOver(id)) {
+				global_start_time = Time::get_singleton()->get_unix_time_from_system() - hang_time;
+				state = State::DECODING;
+			}
+		} break;
+
+		case State::DECODING: {
+			if (paused) {
+				return;
+			}
+
+			if (video_playback) {
+				void *frame_data = nullptr;
+				bool frame_ready = false;
+				bool sw = false;
+
+				double frameTime = nativeGrabVideoFrame(id, &frame_data, sw, frame_ready, width, height);
+				if (frame_ready) {
+					LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] frame ready");
+					if(sw){
+						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] yes sw");
+						data_size = width * height * 3;
+						PackedByteArray image_data;
+						image_data.resize(data_size);
+						memcpy(image_data.ptrw(), frame_data, data_size);
+						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] data size: ", data_size);
+						image->set_data(width, height, false, Image::FORMAT_RGB8, image_data);
+						if(first_frame_v || 
+							imageTexture->get_width() != width || 
+							imageTexture->get_height() != height) {
+								imageTexture = ImageTexture::create_from_image(image);
+						}else{
+							imageTexture->update(image);
+						}
+						emit_signal("video_update", imageTexture, Vector2i(width, height));
+					}else{
+						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] no sw");
+						RenderingServer *rs = RenderingServer::get_singleton();
+						RenderingDevice *rd = rs->get_rendering_device();
+
+						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] data size: ", data_size);
+						texture->set_size(Vector2(width, height));
+						Ref<RDTextureFormat> tf;
+						tf.instantiate();
+						tf->set_width(width);
+						tf->set_height(height);
+						tf->set_format(RenderingDevice::DATA_FORMAT_R8G8B8_UNORM); 
+						tf->set_usage_bits(RenderingDevice::TEXTURE_USAGE_SAMPLING_BIT | 
+										RenderingDevice::TEXTURE_USAGE_CAN_UPDATE_BIT | 
+										RenderingDevice::TEXTURE_USAGE_CAN_COPY_TO_BIT);
+
+						RID rd_tex_rid = rd->texture_create(tf, Ref<RDTextureView>(), TypedArray<PackedByteArray>());
+						rs->texture_replace(texture->get_rid(), rd_tex_rid);
+						emit_signal("video_update", texture, Vector2i(width, height));
+					}
+					first_frame_v = false;
+
+					nativeReleaseVideoFrame(id);
+				}
+
+				if (clock == -1) {
+					video_current_time = Time::get_singleton()->get_unix_time_from_system() - global_start_time;
+					if (video_current_time < video_length || video_length == -1.0f) {
+						nativeSetVideoTime(id, video_current_time);
+					}
+					else {
+						if (!nativeIsVideoBufferEmpty(id)) {
+							nativeSetVideoTime(id, video_current_time);
+						}
+						else {
+							state = State::END_OF_FILE;
+						}
+					}
+				}
+			}
+
+			if (nativeIsVideoBufferEmpty(id) && !nativeIsEOF(id) && first_frame_a && first_frame_v) {
+				hang_time = Time::get_singleton()->get_unix_time_from_system() - global_start_time;
+				state = State::BUFFERING;
+			}
+		} break;
+
+		case State::END_OF_FILE: {
+			if (looping) {
+				state = State::DECODING;
+				seek(0.0f);
+			}
+		} break;
+	}
+}
+
+void FFmpegMediaPlayer::update_audio(float delta){
+	int32_t c = 0;
+	if (playback != nullptr && playback.is_valid() && audio_playback) {
+		c = playback->get_frames_available();
+	}
+	else {
+		return;
+	}
+	bool state_check = (state == State::DECODING || state == State::BUFFERING) && audioFrame.size() < 8192;
+	if (state_check) {
+		// TODO: Implement audio.
+		unsigned char* raw_audio_data = nullptr;
+		int32_t audio_size = 0;
+		int32_t channel = 0;
+		size_t byte_per_sample = 0;
+		/*
+		* AV_SAMPLE_FMT_FLT will usually give us byte_per_sample = 4
+		*/
+		bool ready = false;
+		double frameTime = nativeGetAudioData(id, ready, &raw_audio_data, audio_size, channel, byte_per_sample);
+		LOG_VERBOSE("nativeGetAudioData: ", frameTime);
+		if (clock == 1) {
+			video_current_time = frameTime;
+			nativeSetVideoTime(id, video_current_time);
+		}
+		if (ready) {
+			PackedFloat32Array audio_data = PackedFloat32Array();
+			audio_data.resize(audio_size * byte_per_sample * channel);
+			memcpy(audio_data.ptrw(), raw_audio_data, audio_size * channel * byte_per_sample);
+			emit_signal("audio_update", audio_data, audio_size, channel);
+			//LOG("Audio info, sample size: %d, channel: %d, byte per sample: %d \n", audio_size, channel, byte_per_sample);
+			float s = 0;
+
+			first_frame_a = false;
+
+			for (int32_t i = 0; i < audio_size * channel; i += channel) {
+				float* out = new float[channel];
+				for (int32_t j = 0; j < channel; j++) { // j have byte per sample padding for each sample
+					s = audio_data[i + j];
+					out[j] = s;
+				}
+				float left = out[0];
+				float right;
+				if (channel <= 1) {
+					right = out[0];
+				}
+				else {
+					right = out[1];
+				}
+				audioFrame.push_back(Vector2(left, right));
+				//LOG("Push frame, out: %f, sin: [%f, %f] \n", out, left, right);
+				delete[] out;
+			}
+			nativeFreeAudioData(id);
+		}
+		else {
+			for (int32_t i = 0; i < audio_size; i++) {
+				audioFrame.push_back(lastSubmitAudioFrame);
+			}
+		}
+	}
+	if (playback.is_valid()) {
+		while (c > 0 && audioFrame.size() > 0 && !first_frame_v && state == State::DECODING) {
+			if (audioFrame.size() > 0) {
+				Vector2 element = audioFrame.front()->get();
+				playback->push_frame(element);
+				lastSubmitAudioFrame = element;
+				audioFrame.pop_front();
+			}
+			c -= 1;
+		}
+		while (c > 0) {
+			Vector2 element = Vector2(0, 0);
+			playback->push_frame(element);
+			lastSubmitAudioFrame = element;
+			c -= 1;
+		}
+	}
+}
+
 void FFmpegMediaPlayer::load()
 {
 	load_path(path);
@@ -227,196 +424,12 @@ void FFmpegMediaPlayer::seek(float p_time) {
 }
 
 void FFmpegMediaPlayer::_process(float delta) {
-	switch (state) {
-		default:
-			break;
-
-		case State::LOADING: {
-			if (nativeGetDecoderState(id) == 1) {
-				_init_media();
-				play();
-				LOG("[FFmpegMediaPlayer] Loading successful");
-			} else if (nativeGetDecoderState(id) == -1) {
-				state = State::UNINITIALIZED;
-				LOG_ERROR("[FFmpegMediaPlayer | ERROR] Main loop, async loading failed, nativeGetDecoderState == -1");
-				LOG_ERROR("[FFmpegMediaPlayer | ERROR] Init failed");
-			}
-		} break;
-
-		case State::BUFFERING: {
-			if (nativeIsVideoBufferFull(id) || nativeIsEOF(id)) {
-				global_start_time = Time::get_singleton()->get_unix_time_from_system() - hang_time;
-				state = State::DECODING;
-				audioFrame.clear();
-			}
-		} break;
-
-		case State::SEEK: {
-			if (nativeIsSeekOver(id)) {
-				global_start_time = Time::get_singleton()->get_unix_time_from_system() - hang_time;
-				state = State::DECODING;
-			}
-		} break;
-
-		case State::DECODING: {
-			if (paused) {
-				return;
-			}
-
-			if (video_playback) {
-				void *frame_data = nullptr;
-				bool frame_ready = false;
-				bool sw = false;
-
-				double frameTime = nativeGrabVideoFrame(id, &frame_data, sw, frame_ready, width, height);
-				if (frame_ready) {
-					LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] frame ready");
-					if(sw){
-						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] yes sw");
-						data_size = width * height * 3;
-						PackedByteArray image_data;
-						image_data.resize(data_size);
-						memcpy(image_data.ptrw(), frame_data, data_size);
-						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] data size: ", data_size);
-						image->call_deferred("set_data", width, height, false, Image::FORMAT_RGB8, image_data);
-						imageTexture->set_deferred("image", image);
-						emit_signal("video_update", imageTexture, Vector2i(width, height));
-					}else{
-						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] no sw");
-						RenderingServer *rs = RenderingServer::get_singleton();
-						RenderingDevice *rd = rs->get_rendering_device();
-
-						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] data size: ", data_size);
-						texture->set_size(Vector2(width, height));
-						Ref<RDTextureFormat> tf;
-						tf.instantiate();
-						tf->set_width(width);
-						tf->set_height(height);
-						tf->set_format(RenderingDevice::DATA_FORMAT_R8G8B8_UNORM); 
-						tf->set_usage_bits(RenderingDevice::TEXTURE_USAGE_SAMPLING_BIT | 
-										RenderingDevice::TEXTURE_USAGE_CAN_UPDATE_BIT | 
-										RenderingDevice::TEXTURE_USAGE_CAN_COPY_TO_BIT);
-
-						RID rd_tex_rid = rd->texture_create(tf, Ref<RDTextureView>(), TypedArray<PackedByteArray>());
-						rs->texture_replace(texture->get_rid(), rd_tex_rid);
-						emit_signal("video_update", texture, Vector2i(width, height));
-					}
-					first_frame_v = false;
-
-					nativeReleaseVideoFrame(id);
-				}
-
-				if (clock == -1) {
-					video_current_time = Time::get_singleton()->get_unix_time_from_system() - global_start_time;
-					if (video_current_time < video_length || video_length == -1.0f) {
-						nativeSetVideoTime(id, video_current_time);
-					}
-					else {
-						if (!nativeIsVideoBufferEmpty(id)) {
-							nativeSetVideoTime(id, video_current_time);
-						}
-						else {
-							state = State::END_OF_FILE;
-						}
-					}
-				}
-			}
-
-			if (nativeIsVideoBufferEmpty(id) && !nativeIsEOF(id) && first_frame_a && first_frame_v) {
-				hang_time = Time::get_singleton()->get_unix_time_from_system() - global_start_time;
-				state = State::BUFFERING;
-			}
-		} break;
-
-		case State::END_OF_FILE: {
-			if (looping) {
-				state = State::DECODING;
-				seek(0.0f);
-			}
-		} break;
-	}
+	update_audio(delta);
+	update_video(delta);
 }
 
-// TODO: Implement audio.
-
 void FFmpegMediaPlayer::_physics_process(float delta) {
-	int32_t c = 0;
-	if (playback != nullptr && playback.is_valid() && audio_playback) {
-		c = playback->get_frames_available();
-	}
-	else {
-		return;
-	}
-	bool state_check = (state == State::DECODING || state == State::BUFFERING) && audioFrame.size() < 1024;
-	if (state_check) {
-		// TODO: Implement audio.
-		unsigned char* raw_audio_data = nullptr;
-		int32_t audio_size = 0;
-		int32_t channel = 0;
-		size_t byte_per_sample = 0;
-		/*
-		* AV_SAMPLE_FMT_FLT will usually give us byte_per_sample = 4
-		*/
-		bool ready = false;
-		double frameTime = nativeGetAudioData(id, ready, &raw_audio_data, audio_size, channel, byte_per_sample);
-		LOG_VERBOSE("nativeGetAudioData: ", frameTime);
-		if (clock == 1) {
-			video_current_time = frameTime;
-			nativeSetVideoTime(id, video_current_time);
-		}
-		if (ready) {
-			PackedFloat32Array audio_data = PackedFloat32Array();
-			audio_data.resize(audio_size * byte_per_sample * channel);
-			memcpy(audio_data.ptrw(), raw_audio_data, audio_size * channel * byte_per_sample);
-			emit_signal("audio_update", audio_data, audio_size, channel);
-			//LOG("Audio info, sample size: %d, channel: %d, byte per sample: %d \n", audio_size, channel, byte_per_sample);
-			float s = 0;
-
-			first_frame_a = false;
-
-			for (int32_t i = 0; i < audio_size * channel; i += channel) {
-				float* out = new float[channel];
-				for (int32_t j = 0; j < channel; j++) { // j have byte per sample padding for each sample
-					s = audio_data[i + j];
-					out[j] = s;
-				}
-				float left = out[0];
-				float right;
-				if (channel <= 1) {
-					right = out[0];
-				}
-				else {
-					right = out[1];
-				}
-				audioFrame.push_back(Vector2(left, right));
-				//LOG("Push frame, out: %f, sin: [%f, %f] \n", out, left, right);
-				delete[] out;
-			}
-			nativeFreeAudioData(id);
-		}
-		else {
-			for (int32_t i = 0; i < audio_size; i++) {
-				audioFrame.push_back(lastSubmitAudioFrame);
-			}
-		}
-	}
-	if (playback.is_valid()) {
-		while (c > 0 && audioFrame.size() > 0 && !first_frame_v && state == State::DECODING) {
-			if (audioFrame.size() > 0) {
-				Vector2 element = audioFrame.front()->get();
-				playback->push_frame(element);
-				lastSubmitAudioFrame = element;
-				audioFrame.pop_front();
-			}
-			c -= 1;
-		}
-		while (c > 0) {
-			Vector2 element = Vector2(0, 0);
-			playback->push_frame(element);
-			lastSubmitAudioFrame = element;
-			c -= 1;
-		}
-	}
+	
 }
 
 void FFmpegMediaPlayer::set_player(AudioStreamPlayer* _player)
