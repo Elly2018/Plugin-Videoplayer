@@ -23,6 +23,7 @@ public:
 		int32_t width;
 		int32_t height;
 		float framerate;
+		bool sw;
 	};
 
 	struct AudioInfo : public BaseInfo {
@@ -53,7 +54,7 @@ public:
 	virtual void setVideoEnable(bool isEnable) = 0;
 	virtual void setAudioEnable(bool isEnable) = 0;
 	virtual void setAudioAllChDataEnable(bool isEnable) = 0;
-	virtual double getVideoFrame(void** frameData, int& width, int& height) = 0;
+	virtual double getVideoFrame(void** frameData, int& width, int& height, bool& sw) = 0;
 	virtual double getNextVideoFrameTime() = 0;
 	virtual double getAudioFrame(unsigned char** outputFrame, int& frameSize, int& nb_channel, size_t& byte_per_sample) = 0;
 	virtual double getNextAudioFrameTime() = 0;

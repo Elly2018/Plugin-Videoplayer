@@ -451,7 +451,7 @@ int DecoderFFmpeg::initSwrContext() {
 	return errorCode;
 }
 
-double DecoderFFmpeg::getVideoFrame(void** frameData, int32_t& width, int32_t& height) {
+double DecoderFFmpeg::getVideoFrame(void** frameData, int32_t& width, int32_t& height, bool& sw) {
 	std::lock_guard<std::mutex> lock(mVideoMutex);
 	if (!mIsInitialized || mVideoFrames.size() == 0) {
 		LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Video frame not available. ");
@@ -463,6 +463,7 @@ double DecoderFFmpeg::getVideoFrame(void** frameData, int32_t& width, int32_t& h
 	*frameData = frame->data[0];
 	width = frame->width;
 	height = frame->height;
+	sw = (hw_pix_fmt == AV_PIX_FMT_RGB24 || hw_pix_fmt == AV_PIX_FMT_NONE);
 
 	int64_t timeStamp = frame->pts;
 	double timeInSec = av_q2d(mVideoStream->time_base) * timeStamp;

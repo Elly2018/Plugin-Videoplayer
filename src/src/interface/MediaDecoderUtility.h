@@ -38,7 +38,7 @@ void nativeScheduleDestroyDecoder(int32_t id);
 void nativeDestroyDecoder(int32_t id);
 bool nativeGetOtherStreamIndex(int32_t id, int32_t type, int32_t& li, int32_t& count, int32_t& current);
 bool nativeIsEOF(int32_t id);
-double nativeGrabVideoFrame(int32_t id, void** frameData, bool& frameReady, int32_t& width, int32_t& height);
+double nativeGrabVideoFrame(int32_t id, void** frameData, bool& sw, bool& frameReady, int32_t& width, int32_t& height);
 void nativeReleaseVideoFrame(int32_t id);
 //
 //

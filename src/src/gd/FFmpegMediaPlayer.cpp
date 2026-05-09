@@ -268,33 +268,36 @@ void FFmpegMediaPlayer::_process(float delta) {
 			if (video_playback) {
 				void *frame_data = nullptr;
 				bool frame_ready = false;
-				double frameTime = nativeGrabVideoFrame(id, &frame_data, frame_ready, width, height);
+				bool sw = false;
+				double frameTime = nativeGrabVideoFrame(id, &frame_data, sw, frame_ready, width, height);
 				if (frame_ready) {
-					data_size = width * height * 3;
-					PackedByteArray image_data;
-					image_data.resize(data_size);
-					memcpy(image_data.ptrw(), frame_data, data_size);
-					//memmove(image_data.ptrw(), frame_data, data_size);
-					
-					LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] data size: ", data_size, ", actual frame size: ", image_data);
-					texture->set_size(Vector2(width, height));
+					if(sw){
+						Ref<Image> image = texture->get_image();
+						data_size = width * height * 3;
+						PackedByteArray image_data;
+						image_data.resize(data_size);
+						memcpy(image_data.ptrw(), frame_data, data_size);
+						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] data size: ", data_size, ", actual frame size: ", image_data);
+						texture->set_size(Vector2(width, height));
+						image->set_data(width, height, false, Image::Format::FORMAT_RGB8, image_data);
+					}else{
+						RenderingServer *rs = RenderingServer::get_singleton();
+						RenderingDevice *rd = rs->get_rendering_device();
 
-					RenderingServer *rs = RenderingServer::get_singleton();
-					RenderingDevice *rd = rs->get_rendering_device();
+						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] data size: ", data_size, ", actual frame size: ", image_data);
+						texture->set_size(Vector2(width, height));
+						Ref<RDTextureFormat> tf;
+						tf.instantiate();
+						tf->set_width(width);
+						tf->set_height(height);
+						tf->set_format(RenderingDevice::DATA_FORMAT_R8G8B8_UNORM); 
+						tf->set_usage_bits(RenderingDevice::TEXTURE_USAGE_SAMPLING_BIT | 
+										RenderingDevice::TEXTURE_USAGE_CAN_UPDATE_BIT | 
+										RenderingDevice::TEXTURE_USAGE_CAN_COPY_TO_BIT);
 
-					Ref<RDTextureFormat> tf;
-					tf.instantiate();
-					tf->set_width(width);
-					tf->set_height(height);
-					tf->set_format(RenderingDevice::DATA_FORMAT_R8G8B8A8_UNORM); 
-					tf->set_usage_bits(RenderingDevice::TEXTURE_USAGE_SAMPLING_BIT | 
-									RenderingDevice::TEXTURE_USAGE_CAN_UPDATE_BIT | 
-									RenderingDevice::TEXTURE_USAGE_CAN_COPY_TO_BIT);
-
-					RID rd_tex_rid = rd->texture_create(tf, Ref<RDTextureView>(), TypedArray<PackedByteArray>());
-					rd->texture_update(rd_tex_rid, 0, image_data);
-					rs->texture_replace(texture->get_rid(), rd_tex_rid);
-
+						RID rd_tex_rid = rd->texture_create(tf, Ref<RDTextureView>(), TypedArray<PackedByteArray>());
+						rs->texture_replace(texture->get_rid(), rd_tex_rid);
+					}
 					emit_signal("video_update", texture, Vector2i(width, height));
 					first_frame_v = false;
 
@@ -515,6 +518,6 @@ void FFmpegMediaPlayer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_format", "second"), &FFmpegMediaPlayer::set_format);
 	ClassDB::bind_method(D_METHOD("get_format"), &FFmpegMediaPlayer::get_format);
 
-	ADD_SIGNAL(MethodInfo("video_update", PropertyInfo(Variant::RID, "image", PROPERTY_HINT_RESOURCE_TYPE, "ImageTexture"), PropertyInfo(Variant::VECTOR2I, "size")));
+	ADD_SIGNAL(MethodInfo("video_update", PropertyInfo(Variant::RID, "image", PROPERTY_HINT_RESOURCE_TYPE, "Texture2D"), PropertyInfo(Variant::VECTOR2I, "size")));
 	ADD_SIGNAL(MethodInfo("audio_update", PropertyInfo(Variant::PACKED_FLOAT32_ARRAY, "sample"), PropertyInfo(Variant::INT, "size"), PropertyInfo(Variant::INT, "channel")));
 }

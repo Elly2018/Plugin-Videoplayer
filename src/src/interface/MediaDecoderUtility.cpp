@@ -403,7 +403,7 @@ void nativeSetAudioAllChDataEnable(int32_t id, bool isEnable) {
 	videoCtx->avhandler->setAudioAllChDataEnable(isEnable);
 }
 
-double nativeGrabVideoFrame(int32_t id, void** frameData, bool& frameReady, int32_t& width, int32_t& height) {
+double nativeGrabVideoFrame(int32_t id, void** frameData, bool& sw, bool& frameReady, int32_t& width, int32_t& height) {
     frameReady = false;
     std::shared_ptr<VideoContext> videoCtx;
     if (!getVideoContext(id, videoCtx) || videoCtx->avhandler == nullptr) { return -1.0; }
@@ -422,7 +422,7 @@ double nativeGrabVideoFrame(int32_t id, void** frameData, bool& frameReady, int3
 		  //bool drop = true;
 		  double curFrameTime = -1.0;
 		  //double nextFrameTime = -1.0;
-		  curFrameTime = localAVDecoderHandler->getVideoFrame(frameData, width, height);
+		  curFrameTime = localAVDecoderHandler->getVideoFrame(frameData, width, height, sw);
 		  bool pass = frameData != nullptr && curFrameTime != -1 && videoCtx->lastUpdateTimeV != curFrameTime;
           if (pass) {
               frameReady = true;

@@ -52,7 +52,7 @@ bool AVDecoderHandler::isPreloadRunning() const {
 	return mBufferThreadRunning;
 }
 
-double AVDecoderHandler::getVideoFrame(void** frameData, int32_t& width, int32_t& height) {
+double AVDecoderHandler::getVideoFrame(void** frameData, int32_t& width, int32_t& height, bool& sw) {
 	bool decoder_null = mIDecoder == nullptr;
 	bool decoder_disable = !mIDecoder->getVideoInfo().isEnabled;
 	bool decoder_seek = mDecoderState == SEEK;
@@ -65,7 +65,7 @@ double AVDecoderHandler::getVideoFrame(void** frameData, int32_t& width, int32_t
 		return -1;
 	}
 
-	return mIDecoder->getVideoFrame(frameData, width, height);
+	return mIDecoder->getVideoFrame(frameData, width, height, sw);
 }
 
 double AVDecoderHandler::getNextVideoFrameTime() {
