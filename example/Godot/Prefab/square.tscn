@@ -1,32 +1,27 @@
-[gd_scene load_steps=5 format=3 uid="uid://bn064jv76jmaw"]
+[gd_scene load_steps=5 format=3 uid="uid://cwv823pnlsrpd"]
 
-[ext_resource type="Script" path="res://Script/DemoMediaPlayer.gd" id="1_lg4ib"]
-[ext_resource type="Material" uid="uid://brmlmtpgp5cya" path="res://Material/shader_material.tres" id="2_ycshh"]
+[ext_resource type="Script" path="res://Script/DemoMediaPlayer.gd" id="1_i3p8b"]
+[ext_resource type="Material" uid="uid://brmlmtpgp5cya" path="res://Material/shader_material.tres" id="2_f0087"]
 
-[sub_resource type="SphereMesh" id="SphereMesh_86pco"]
-flip_faces = true
-radius = 6.0
-height = 6.0
-radial_segments = 16
-rings = 16
+[sub_resource type="PlaneMesh" id="PlaneMesh_bf0yx"]
 
 [sub_resource type="AudioStreamGenerator" id="AudioStreamGenerator_cr308"]
 buffer_length = 0.2
 
 [node name="Square" type="Node3D" node_paths=PackedStringArray("geo", "player", "audio_stream")]
 transform = Transform3D(20, 0, 0, 0, 20, 0, 0, 0, 20, 0.203564, -0.109128, 0.122446)
-script = ExtResource("1_lg4ib")
+script = ExtResource("1_i3p8b")
 loop = true
 geo = NodePath("MeshInstance3D")
 player = NodePath("FFmpegMediaPlayer")
 audio_stream = NodePath("Player")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0)
-material_override = ExtResource("2_ycshh")
+transform = Transform3D(16, 0, 0, 0, -6.99382e-07, -9, 0, 16, -3.93403e-07, 0, 0, -5)
+material_override = ExtResource("2_f0087")
 cast_shadow = 0
 gi_mode = 0
-mesh = SubResource("SphereMesh_86pco")
+mesh = SubResource("PlaneMesh_bf0yx")
 
 [node name="Player" type="AudioStreamPlayer" parent="."]
 stream = SubResource("AudioStreamGenerator_cr308")

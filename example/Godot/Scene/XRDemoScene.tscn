@@ -17,8 +17,8 @@ camera_attributes = SubResource("CameraAttributesPractical_3w5hy")
 
 [node name="Player" parent="." instance=ExtResource("2_jmy22")]
 
-[node name="Sphere" parent="." instance=ExtResource("3_alk7n")]
+[node name="Square" parent="." instance=ExtResource("3_alk7n")]
 play_on_start = true
-uri = "Resource/sbs_vr.webm"
+uri = "Resource/sbs.mp4"
 
 [node name="XRPlayUI" parent="." instance=ExtResource("4_bs2wu")]
