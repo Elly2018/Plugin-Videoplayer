@@ -9,6 +9,8 @@
 extern "C" {
 	#include <libavutil/imgutils.h>
 	#include <libavutil/hwcontext.h>
+	#include <libavfilter/buffersink.h>
+	#include <libavfilter/buffersrc.h>
 }
 
 #ifdef DECODER_HW
@@ -782,8 +784,16 @@ void DecoderFFmpeg::updateVideoFrame() {
 	dstFrame->format = dstFormat;
 	dstFrame->width  = width;
 	dstFrame->height = height;
+#ifdef DECODER_HW
+	av_hwframe_get_buffer(srcFrame->hw_frames_ctx, dstFrame, 0);
+	AVFrame* cpuFrame = av_frame_alloc();
+    cpuFrame->format = AV_PIX_FMT_RGB24;
+	av_hwframe_transfer_data(cpuFrame, srcFrame, 0);
+	std::lock_guard<std::mutex> lock(mVideoMutex);
+	mVideoFrames.push(cpuFrame);
+	av_frame_free(&dstFrame);
+#else
 	av_frame_get_buffer(dstFrame, 1);
-
 	if (mSwsContext == nullptr || 
 		mSwsWidth != width || 
 		mSwsHeight != height || 
@@ -812,13 +822,11 @@ void DecoderFFmpeg::updateVideoFrame() {
 	dstFrame->format = dstFormat;
 	dstFrame->width = srcFrame->width;
 	dstFrame->height = srcFrame->height;
-
-	av_frame_free(&srcFrame);
-
-	LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] updateVideoFrame = ", (float)(clock() - start) / CLOCKS_PER_SEC);
-
 	std::lock_guard<std::mutex> lock(mVideoMutex);
 	mVideoFrames.push(dstFrame);
+#endif
+	av_frame_free(&srcFrame);
+	LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] updateVideoFrame = ", (float)(clock() - start) / CLOCKS_PER_SEC);
 	updateBufferState();
 }
 
