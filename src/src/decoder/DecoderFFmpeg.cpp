@@ -3,7 +3,7 @@
 #include <string>
 #include <thread>
 #include <future>
-#include "../DecodeConfig.h"
+#include <functional>
 #include "../gd/Logger.h"
 
 extern "C" {
@@ -14,23 +14,22 @@ extern "C" {
 }
 
 #ifdef DECODER_HW
-static AVBufferRef* hw_device_ctx = nullptr;
-static enum AVPixelFormat hw_pix_fmt = AV_PIX_FMT_NONE;
-
 static int32_t hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type) {
     int32_t err = 0;
-    if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type, NULL, NULL, 0)) < 0) {
+	DecoderFFmpeg* instance = static_cast<DecoderFFmpeg*>(ctx->opaque);
+    if ((err = av_hwdevice_ctx_create(&instance->hw_device_ctx, type, NULL, NULL, 0)) < 0) {
         LOG_ERROR("Failed to create specified HW device");
         return err;
     }
-    ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
+    ctx->hw_device_ctx = av_buffer_ref(instance->hw_device_ctx);
     return err;
 }
 
 static enum AVPixelFormat get_hw_format(AVCodecContext *ctx, const enum AVPixelFormat *pix_fmts) {
     const enum AVPixelFormat *p;
+	DecoderFFmpeg* instance = static_cast<DecoderFFmpeg*>(ctx->opaque);
     for (p = pix_fmts; *p != -1; p++) {
-        if (*p == hw_pix_fmt)
+        if (*p == instance->hw_pix_fmt)
             return *p;
     }
     LOG_ERROR("Failed to get HW surface format.");
@@ -209,6 +208,7 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 #ifdef DECODER_HW
 		// Only set up HW pipeline if a matching format was found
 		if (hw_pix_fmt != AV_PIX_FMT_NONE) {
+			mVideoCodecContext->opaque = this;
 			if (hw_decoder_init(mVideoCodecContext, type) >= 0) {
 				hw_pix_fmt = AV_PIX_FMT_NONE;
 				mVideoCodecContext = avcodec_alloc_context3(mVideoCodec);

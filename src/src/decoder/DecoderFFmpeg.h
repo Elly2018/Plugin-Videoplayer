@@ -2,6 +2,7 @@
 #include <queue>
 #include <mutex>
 #include "IDecoder.h"
+#include "../DecodeConfig.h"
 
 extern "C" {
 	#include "libavformat/avformat.h"
@@ -55,7 +56,10 @@ public:
 	 */
 	int32_t getStreamType(int32_t index);
 
-
+#ifdef DECODER_HW
+	AVBufferRef* hw_device_ctx = nullptr;
+	enum AVPixelFormat hw_pix_fmt = AV_PIX_FMT_NONE;
+#endif
 private:
 	bool mIsInitialized;
 	bool mIsAudioAllChEnabled;
