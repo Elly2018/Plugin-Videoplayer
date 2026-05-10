@@ -44,6 +44,7 @@ public:
 	void freePreloadFrame();
 	void freeBufferFrame();
 	void print_stream_maps();
+	int32_t init_gpu_filter(int width, int height, enum AVPixelFormat hw_pix_fmt);
 
 	int32_t getMetaData(char**& key, char**& value);
 	int32_t getStreamCount();
@@ -77,6 +78,9 @@ private:
 	AVCodecContext*	mVideoCodecContext;
 	AVCodecContext*	mAudioCodecContext;
 	AVCodecContext*	mSubtitleCodecContext{};
+	AVFilterGraph* filter_graph;
+	AVFilterContext* buffersink_ctx;
+	AVFilterContext* buffersrc_ctx;
 
 	AVPacket*	mPacket;
 	std::queue<AVFrame*> mVideoFrames;

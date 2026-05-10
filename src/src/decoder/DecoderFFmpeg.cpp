@@ -9,8 +9,10 @@
 extern "C" {
 	#include <libavutil/imgutils.h>
 	#include <libavutil/hwcontext.h>
+	#include <libavutil/opt.h>
 	#include <libavfilter/buffersink.h>
 	#include <libavfilter/buffersrc.h>
+	#include <libavfilter/avfilter.h>
 }
 
 #ifdef DECODER_HW
@@ -931,6 +933,46 @@ void DecoderFFmpeg::print_stream_maps()
 		LOG("    Codec_name: ", mAudioCodec->name);
 		LOG("    Codec_long_name: ", mAudioCodec->long_name);
 	}
+}
+
+int32_t DecoderFFmpeg::init_gpu_filter(int width, int height, enum AVPixelFormat hw_pix_fmt){
+	char args[512];
+    filter_graph = avfilter_graph_alloc();
+	const AVFilter* buffersrc = avfilter_get_by_name("buffer");
+	snprintf(args, sizeof(args),
+		"video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
+		width, height, hw_pix_fmt, 1, 1, 1, 1);
+	avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in", args, NULL, filter_graph);
+
+	const AVFilter* buffersink = avfilter_get_by_name("buffersink");
+    avfilter_graph_create_filter(&buffersink_ctx, buffersink, "out", NULL, NULL, filter_graph);
+
+	enum AVPixelFormat pix_fmts[] = { AV_PIX_FMT_RGB24, AV_PIX_FMT_NONE };
+    av_opt_set_int_list(buffersink_ctx, "pix_fmts", pix_fmts, AV_PIX_FMT_NONE, AV_OPT_SEARCH_CHILDREN);
+
+	const char* filter_descr = "scale_cuda=format=rgb24";
+
+	AVFilterInOut* outputs = avfilter_inout_alloc();
+    AVFilterInOut* inputs = avfilter_inout_alloc();
+
+	outputs->name = av_strdup("in");
+    outputs->filter_ctx = buffersrc_ctx;
+    outputs->pad_idx = 0;
+    outputs->next = NULL;
+
+    inputs->name = av_strdup("out");
+    inputs->filter_ctx = buffersink_ctx;
+    inputs->pad_idx = 0;
+    inputs->next = NULL;
+
+	avfilter_graph_parse_ptr(filter_graph, filter_descr, &inputs, &outputs, NULL);
+
+	for (int i = 0; i < filter_graph->nb_filters; i++) {
+        filter_graph->filters[i]->hw_device_ctx = av_buffer_ref(hw_device_ctx);
+    }
+
+    avfilter_graph_config(filter_graph, NULL);
+    return 0;
 }
 
 void DecoderFFmpeg::freeFrontFrame(std::queue<AVFrame*>* frameBuff, std::mutex* mutex) {
