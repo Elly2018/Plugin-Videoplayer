@@ -12,6 +12,7 @@ uniform int mode;
 // 1: 180
 uniform int coverage;
 // The video texture
+// NV12
 uniform sampler2D tex : source_color;
 
 void fragment() {
