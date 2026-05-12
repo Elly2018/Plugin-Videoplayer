@@ -935,6 +935,7 @@ void DecoderFFmpeg::print_stream_maps()
 	}
 }
 
+#ifdef DECODER_HW
 int32_t DecoderFFmpeg::init_gpu_filter(int width, int height, enum AVPixelFormat hw_pix_fmt){
 	char args[512];
     filter_graph = avfilter_graph_alloc();
@@ -974,6 +975,7 @@ int32_t DecoderFFmpeg::init_gpu_filter(int width, int height, enum AVPixelFormat
     avfilter_graph_config(filter_graph, NULL);
     return 0;
 }
+#endif
 
 void DecoderFFmpeg::freeFrontFrame(std::queue<AVFrame*>* frameBuff, std::mutex* mutex) {
 	std::lock_guard<std::mutex> lock(*mutex);

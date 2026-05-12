@@ -11,3 +11,12 @@ else
     mv ffmpeg-N-123074-g4e32fb4c2a-linux64-gpl-shared ffmpeg
     rm ./ffmpeg.tar.xz
 fi
+
+if [ -d "npp" ]; then
+    echo "npp folder exist"
+else
+    curl --output npp.tar.xz --ssl-no-revoke -L -O https://developer.download.nvidia.com/compute/nppplus/redist/libnpp_plus/linux-x86_64/libnpp_plus-linux-x86_64-0.10.0.0_cuda12-archive.tar.xz
+    tar -xf npp.tar.xz
+    mv libnpp_plus-linux-x86_64-0.10.0.0_cuda12-archive npp
+    rm ./npp.tar.xz
+fi

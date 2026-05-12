@@ -10,6 +10,8 @@ build_**/
 reference
 src/ffmpeg/
 src/ffmpeg*/
+src/npp/
+src/npp*/
 example/Godot/addons/videoplayer/lib/Linux-AMD64/*.so
 example/Godot/addons/videoplayer/lib/Windows-AMD64/*.dll
 example/Unity/Assets/EllyVideoPlayer/Plugin/Linux-AMD64/*.so

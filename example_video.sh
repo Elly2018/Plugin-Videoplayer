@@ -1,5 +1,6 @@
 #!/bin/bash
 
+mkdir -p example/Godot/Resource
 cd example/Godot/Resource
 
 if [ -f "asmr.mp4" ]; then
