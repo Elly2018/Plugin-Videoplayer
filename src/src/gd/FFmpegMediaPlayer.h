@@ -209,7 +209,7 @@ private:
 	/// 
 	/// The texture we're sending to GDscript, user should take this resource and apply to the material it want
 	/// 
-	Ref<PlaceholderTexture2D> texture;
+	Ref<Texture2D> texture;
 	Ref<Image> image;
 	Ref<ImageTexture> imageTexture;
 	/// 

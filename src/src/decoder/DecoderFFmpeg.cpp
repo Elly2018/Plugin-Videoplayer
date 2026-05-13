@@ -467,6 +467,12 @@ int DecoderFFmpeg::initSwrContext() {
 	return errorCode;
 }
 
+#ifdef DECODER_HW
+double DecoderFFmpeg::getVideoFrame(AVBufferRef* hw_device_ctx, int32_t&  width, int32_t&  height, bool& sw){
+
+}
+#endif
+
 double DecoderFFmpeg::getVideoFrame(void** frameData, int32_t& width, int32_t& height, bool& sw) {
 	std::lock_guard<std::mutex> lock(mVideoMutex);
 	if (!mIsInitialized || mVideoFrames.size() == 0) {
@@ -475,16 +481,17 @@ double DecoderFFmpeg::getVideoFrame(void** frameData, int32_t& width, int32_t& h
 		return -1;
 	}
 
-#ifdef DECODER_HW
-	sw = (hw_pix_fmt == AV_PIX_FMT_RGB24 || hw_pix_fmt == AV_PIX_FMT_NONE);
-#else
-	sw = true;
-#endif
-
 	AVFrame* frame = mVideoFrames.front();
 	*frameData = frame->data[0];
 	width = frame->width;
 	height = frame->height;
+	AVPixelFormat fmt = (AVPixelFormat)frame->format;
+	
+#ifdef DECODER_HW
+	sw = (fmt == AV_PIX_FMT_RGB24 || fmt == AV_PIX_FMT_NONE);
+#else
+	sw = true;
+#endif
 
 	int64_t timeStamp = frame->pts;
 	double timeInSec = av_q2d(mVideoStream->time_base) * timeStamp;

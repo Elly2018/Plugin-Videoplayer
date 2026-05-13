@@ -131,12 +131,12 @@ void FFmpegMediaPlayer::update_video(float delta){
 						}
 						emit_signal("video_update", imageTexture, Vector2i(width, height));
 					}else{
-						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] no sw");
 						RenderingServer *rs = RenderingServer::get_singleton();
 						RenderingDevice *rd = rs->get_rendering_device();
+						String driver = rs->get_rendering_device()->get_device_name();
+						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] no sw");
+						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] driver: ", driver);
 
-						LOG_VERBOSE("[FFmpegMediaPlayer | VERBOSE] data size: ", data_size);
-						texture->set_size(Vector2(width, height));
 						Ref<RDTextureFormat> tf;
 						tf.instantiate();
 						tf->set_width(width);
@@ -148,6 +148,7 @@ void FFmpegMediaPlayer::update_video(float delta){
 
 						RID rd_tex_rid = rd->texture_create(tf, Ref<RDTextureView>(), TypedArray<PackedByteArray>());
 						rs->texture_replace(texture->get_rid(), rd_tex_rid);
+						texture->emit_changed();
 						emit_signal("video_update", texture, Vector2i(width, height));
 					}
 					first_frame_v = false;

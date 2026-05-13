@@ -2,6 +2,16 @@
 #include <cstddef>
 #include <cinttypes>
 
+///
+/// We want the information of current render engine provide,
+/// THis affect the ability of the bottom deocder behaviours.
+///
+struct EngineContext {
+public:
+	EngineContext() {}	
+	virtual ~EngineContext() {}
+};
+
 class IDecoder
 {
 public:

@@ -38,6 +38,10 @@ public:
 	void setVideoEnable(bool isEnable);
 	void setAudioEnable(bool isEnable);
 	void setAudioAllChDataEnable(bool isEnable);
+
+#ifdef DECODER_HW
+	double getVideoFrame(AVBufferRef* hw_device_ctx, int32_t&  width, int32_t&  height, bool& sw);
+#endif
 	double getVideoFrame(void** frameData, int32_t&  width, int32_t&  height, bool& sw);
 	double getAudioFrame(unsigned char** outputFrame, int32_t&  frameSize, int32_t&  nb_channel, size_t& byte_per_sample);
 	double getNextVideoFrameTime();
