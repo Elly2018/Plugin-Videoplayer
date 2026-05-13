@@ -18,6 +18,8 @@ file(GLOB_RECURSE NativeSRC src/native/*.h src/native/*.hpp src/native/*.cpp src
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 add_compile_options(-Werror)
+add_compile_options(-g3)
+add_compile_options(-O0)
 
 if( "${Engine}" STREQUAL "Godot" )
 	list(APPEND SRC "${CORESRC}" "${GDSRC}")

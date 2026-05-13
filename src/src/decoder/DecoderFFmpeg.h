@@ -10,6 +10,9 @@ extern "C" {
 	#include "libswresample/swresample.h"
 	#include "libswscale/swscale.h"
 	#include <libavutil/fifo.h>
+	#include <libavfilter/buffersink.h>
+	#include <libavfilter/buffersrc.h>
+	#include <libavfilter/avfilter.h>
 }
 
 ///

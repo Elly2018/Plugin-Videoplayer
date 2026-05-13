@@ -10,9 +10,6 @@ extern "C" {
 	#include <libavutil/imgutils.h>
 	#include <libavutil/hwcontext.h>
 	#include <libavutil/opt.h>
-	#include <libavfilter/buffersink.h>
-	#include <libavfilter/buffersrc.h>
-	#include <libavfilter/avfilter.h>
 }
 
 #ifdef DECODER_HW
@@ -201,49 +198,55 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
     }
 #endif
 
+	bool v_hw = false;
 	if (st_index[AVMEDIA_TYPE_VIDEO] < 0) {
 		LOG("[DecoderFFmpeg] video stream not found. ", st_index[AVMEDIA_TYPE_VIDEO]);
 		mVideoInfo.isEnabled = false;
 	} else {
+		LOG("[DecoderFFmpeg] video stream found. ", st_index[AVMEDIA_TYPE_VIDEO]);
 		mVideoInfo.isEnabled = true;
 		mVideoStream = mAVFormatContext->streams[st_index[AVMEDIA_TYPE_VIDEO]];
 #ifdef DECODER_HW
 		// Only set up HW pipeline if a matching format was found
 		if (hw_pix_fmt != AV_PIX_FMT_NONE) {
+			mVideoCodecContext = avcodec_alloc_context3(mVideoCodec);
 			mVideoCodecContext->opaque = this;
+			mVideoCodecContext->get_format = get_hw_format;
+			mVideoCodecContext->refs = 1;
 			if (hw_decoder_init(mVideoCodecContext, type) >= 0) {
-				hw_pix_fmt = AV_PIX_FMT_NONE;
-				mVideoCodecContext = avcodec_alloc_context3(mVideoCodec);
-				mVideoCodecContext->get_format = get_hw_format;
-				mVideoCodecContext->refs = 1;
 				int32_t ret = avcodec_parameters_to_context(mVideoCodecContext, mVideoStream->codecpar);
 				if (mVideoCodec == nullptr) {
-					LOG("Video codec not available.");
-					return false;
+					LOG_ERROR_VERBOSE("Video codec not available.");
+					goto v_hw_done;
 				}
 				mVideoCodec = avcodec_find_decoder(mVideoCodecContext->codec_id);
 				if (mVideoCodec == nullptr) {
-					LOG("Video codec not available.");
-					return false;
+					LOG_ERROR_VERBOSE("Video codec not available.");
+					goto v_hw_done;
 				}
+				v_hw = true;
 			}else{
-				LOG("[DecoderFFmpeg] HW device init failed — falling back to SW decode");
+				hw_pix_fmt = AV_PIX_FMT_NONE;
+				LOG_ERROR("[DecoderFFmpeg] HW device init failed — falling back to SW decode");
 			}
-		} else 
+		}
 #endif
-		{
+v_hw_done:
+		if(!v_hw){
+			LOG_VERBOSE("[DecoderFFmpeg] Attempt to use video software decoder");
+			hw_pix_fmt = AV_PIX_FMT_RGB24;
 			mVideoCodecContext = avcodec_alloc_context3(NULL);
 			if (!mVideoCodecContext) return false;
 			mVideoCodecContext->refs = 1;
 			int32_t ret = avcodec_parameters_to_context(mVideoCodecContext, mVideoStream->codecpar);
 			LOG("[DecoderFFmpeg] Video codec id: ", mVideoCodecContext->codec_id);
 			if (mVideoCodec == nullptr) {
-				LOG("Video codec not available.");
+				LOG_ERROR("Video codec not available.");
 				return false;
 			}
 			mVideoCodec = avcodec_find_decoder(mVideoCodecContext->codec_id);
 			if (mVideoCodec == nullptr) {
-				LOG("Video codec not available.");
+				LOG_ERROR("Video codec not available.");
 				return false;
 			}
 		}
@@ -472,15 +475,16 @@ double DecoderFFmpeg::getVideoFrame(void** frameData, int32_t& width, int32_t& h
 		return -1;
 	}
 
-	AVFrame* frame = mVideoFrames.front();
-	*frameData = frame->data[0];
-	width = frame->width;
-	height = frame->height;
 #ifdef DECODER_HW
 	sw = (hw_pix_fmt == AV_PIX_FMT_RGB24 || hw_pix_fmt == AV_PIX_FMT_NONE);
 #else
 	sw = true;
 #endif
+
+	AVFrame* frame = mVideoFrames.front();
+	*frameData = frame->data[0];
+	width = frame->width;
+	height = frame->height;
 
 	int64_t timeStamp = frame->pts;
 	double timeInSec = av_q2d(mVideoStream->time_base) * timeStamp;
