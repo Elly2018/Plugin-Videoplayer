@@ -4,7 +4,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_STANDARD 17)
 
-
 if (NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
     if (NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "" FORCE)
@@ -110,8 +109,8 @@ set( BUILD_OUTPUT_DIR "${PROJECT_BINARY_DIR}/${PROJECT_NAME}/" )
 
 set_target_properties( ${PROJECT_NAME}
     PROPERTIES
-        CXX_VISIBILITY_PRESET hidden
-        VISIBILITY_INLINES_HIDDEN true
+        CXX_VISIBILITY_PRESET default
+        VISIBILITY_INLINES_HIDDEN false
         RUNTIME_OUTPUT_DIRECTORY "${BUILD_OUTPUT_DIR}/${LIB_DIR}"
         LIBRARY_OUTPUT_DIRECTORY "${BUILD_OUTPUT_DIR}/${LIB_DIR}"
 )
@@ -140,7 +139,7 @@ if(POLICY CMP0177)
     cmake_policy(SET CMP0177 NEW)
 endif()
 
-add_subdirectory( templates )
+
 
 # ccache
 # Turns on ccache if found
@@ -152,6 +151,7 @@ include( ClangFormat )
 
 # godot-cpp
 if( "${Engine}" STREQUAL "Godot" )
+    add_subdirectory( templates )
 	# From here: https://github.com/godotengine/godot-cpp
 	if ( NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/godot-cpp/Makefile" )
 		message(

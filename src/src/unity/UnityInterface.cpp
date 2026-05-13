@@ -1,7 +1,7 @@
 #include "UnityInterface.h"
-#include <Logger.h>
-#include <unity/FFmpegMediaPlayer.h>
 #include <memory>
+#include "FFmpegMediaPlayer.h"
+#include "Logger.h"
 
 static IUnityInterfaces* s_UnityInterfaces = 0;
 static IUnityGraphics* s_Graphics = 0;

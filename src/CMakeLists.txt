@@ -3,25 +3,31 @@ file(GLOB_RECURSE CORESRC
 	src/encoder/*.hpp src/encoder/*.h src/encoder/*.cpp src/encoder/*.c
 	src/decoder/*.hpp src/decoder/*.h src/decoder/*.cpp src/decoder/*.c
 	src/interface/*.hpp src/interface/*.h src/interface/*.cpp src/interface/*.c
-	src/DecodeConfig.h)
-
+	src/DecodeConfig.h src/Logger.h
+)
 file(GLOB_RECURSE GDSRC src/gd/*.hpp src/gd/*.h src/gd/*.cpp src/gd/*.c)
 file(GLOB_RECURSE UnitySRC src/unity/*.hpp src/unity/*.h src/unity/*.cpp src/unity/*.c)
-file(GLOB_RECURSE UnityNativeSRC unity-native/PluginSource/source/*.hpp unity-native/PluginSource/source/*.h unity-native/PluginSource/source/*.cpp unity-native/PluginSource/source/*.c)
-file(GLOB_RECURSE UnrealSRC src/unreal/*.hpp src/unreal/*.h src/unreal/*.cpp src/unreal/*.c)
-file(GLOB_RECURSE NativeSRC src/Logger.h)
+file(GLOB_RECURSE UnityNativeSRC src/NativeRenderingPlugin/PluginSource/source/*.hpp src/NativeRenderingPlugin/PluginSource/source/*.h 
+	src/NativeRenderingPlugin/PluginSource/source/*.cpp src/NativeRenderingPlugin/PluginSource/source/*.c
+	src/NativeRenderingPlugin/PluginSource/source/Unity/*.hpp src/NativeRenderingPlugin/PluginSource/source/Unity/*.h 
+	src/NativeRenderingPlugin/PluginSource/source/Unity/*.cpp src/NativeRenderingPlugin/PluginSource/source/Unity/*.c
+	src/NativeRenderingPlugin/PluginSource/source/gl3w/*.hpp src/NativeRenderingPlugin/PluginSource/source/gl3w/*.h 
+	src/NativeRenderingPlugin/PluginSource/source/gl3w/*.cpp src/NativeRenderingPlugin/PluginSource/source/gl3w/*.c)
+file(GLOB_RECURSE UnrealSRC src/ue/*.hpp src/ue/*.h src/ue/*.cpp src/ue/*.c)
+file(GLOB_RECURSE NativeSRC src/native/*.h src/native/*.hpp src/native/*.cpp src/native/*.c)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 add_compile_options(-Werror)
+add_compile_options(-g3)
+add_compile_options(-O0)
 
 if( "${Engine}" STREQUAL "Godot" )
 	list(APPEND SRC "${CORESRC}" "${GDSRC}")
 	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "gd_videoplayer")
 elseif( "${Engine}" STREQUAL "Unity" )
 	list(APPEND SRC "${CORESRC}" "${UnitySRC}" "${UnityNativeSRC}")
-	target_include_directories( ${PROJECT_NAME} PRIVATE "unity-native/PluginSource/source")
+	target_include_directories( ${PROJECT_NAME} PRIVATE "NativeRenderingPlugin/PluginSource/source")
 	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "unity_videoplayer")
-	target_link_libraries(${PROJECT_NAME} PRIVATE opengl32.lib)
 elseif( "${Engine}" STREQUAL "Unreal" )
 	list(APPEND SRC "${CORESRC}" "${UnrealSRC}")
 	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "unreal_videoplayer")

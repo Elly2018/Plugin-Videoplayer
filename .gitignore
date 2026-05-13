@@ -3,23 +3,28 @@
 *.os
 *.vs
 
-# Solutions
-NativeExtensionTemplate-build/
-GDExtensionTemplate-build/
-UnityExtensionTemplate-build/
-UnrealExtensionTemplate-build/
+example/Godot/Resource/*.mp4
 
-build_godot_linux_amd64/
+# Solutions
+build_**/
 reference
 src/ffmpeg/
 src/ffmpeg*/
+src/npp/
+src/npp*/
 example/Godot/addons/videoplayer/lib/Linux-AMD64/*.so
 example/Godot/addons/videoplayer/lib/Windows-AMD64/*.dll
+example/Unity/Assets/EllyVideoPlayer/Plugin/Linux-AMD64/*.so
+example/Unity/Assets/EllyVideoPlayer/Plugin/Windows-AMD64/*.dll
 
-src/lib/ffmpeg.zip
-src/lib/ffmpeg.tar.xz
-src/lib/ffmpeg-linux64/
-src/lib/ffmpeg-win64/
+src/ffmpeg.zip
+src/ffmpeg.tar.xz
+src/ffmpeg-linux64/
+src/ffmpeg-win64/
+src/Makefile
+src/platform.txt
+src/NativeRenderingPlugin
+src/NativeRenderingPlugin/
 
 # SConstruct
 .sconf_temp
@@ -36,11 +41,19 @@ libs/
 VideoPlayer.dir/
 
 # Extension
-src/unity-native/
 FFmpeg/
+godot-cpp
 godot-cpp/
 
 # Editors
 .vscode/
 .idea
 /SDL-main
+
+cmake_install.cmake
+install_local_manifest.txt
+install_manifest.txt
+
+src/cmake_install.cmake
+src/install_local_manifest.txt
+src/install_manifest.txt

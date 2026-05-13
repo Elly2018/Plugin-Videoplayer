@@ -21,6 +21,12 @@
 #include <godot_cpp/classes/audio_stream_generator_playback.hpp>
 #include <godot_cpp/classes/global_constants.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
+#include <godot_cpp/classes/rendering_server.hpp>
+#include <godot_cpp/classes/rendering_device.hpp>
+#include <godot_cpp/classes/rd_texture_format.hpp>
+#include <godot_cpp/classes/rd_texture_view.hpp>
+#include <godot_cpp/classes/placeholder_texture2d.hpp>
+#include <godot_cpp/classes/texture_rect.hpp>
 #include <godot_cpp/classes/node.hpp>
 
 using namespace godot;
@@ -183,6 +189,8 @@ private:
 	/// To fill the buffer of audio stream (audio stream generator)
 	/// 
 	void audio_init();
+	void update_video(float delta);
+	void update_audio(float delta);
 
 	/// 
 	/// The audio player component in the scene,
@@ -201,11 +209,9 @@ private:
 	/// 
 	/// The texture we're sending to GDscript, user should take this resource and apply to the material it want
 	/// 
-	Ref<ImageTexture> texture;
-	/// 
-	/// The raw image data, video player will write the bytes data to it
-	/// 
+	Ref<Texture2D> texture;
 	Ref<Image> image;
+	Ref<ImageTexture> imageTexture;
 	/// 
 	/// User select path
 	/// 
@@ -224,6 +230,10 @@ private:
 	/// 
 	State state = State::UNINITIALIZED;
 
+	// GPU Handles
+    RID rd_tex_rid; // RenderingDevice (Vulkan memory)
+    RID rs_tex_rid; // RenderingServer (Godot Texture wrapper)
+	
 	bool first_frame_v = true;
 	bool first_frame_a = true;
 	bool paused = false;

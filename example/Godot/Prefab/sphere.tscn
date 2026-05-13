@@ -1,18 +1,19 @@
 [gd_scene load_steps=5 format=3 uid="uid://bn064jv76jmaw"]
 
-[ext_resource type="Script" uid="uid://cbq3k73pk5872" path="res://Script/DemoMediaPlayer.gd" id="1_lg4ib"]
+[ext_resource type="Script" path="res://Script/DemoMediaPlayer.gd" id="1_lg4ib"]
 [ext_resource type="Material" uid="uid://brmlmtpgp5cya" path="res://Material/shader_material.tres" id="2_ycshh"]
 
-[sub_resource type="SphereMesh" id="SphereMesh_2ikhj"]
-lightmap_size_hint = Vector2i(17, 9)
+[sub_resource type="SphereMesh" id="SphereMesh_86pco"]
 flip_faces = true
-uv2_padding = 0.0
-rings = 64
+radius = 6.0
+height = 6.0
+radial_segments = 16
+rings = 16
 
 [sub_resource type="AudioStreamGenerator" id="AudioStreamGenerator_cr308"]
 buffer_length = 0.2
 
-[node name="Sphere" type="Node3D" node_paths=PackedStringArray("geo", "player", "audio_stream")]
+[node name="Square" type="Node3D" node_paths=PackedStringArray("geo", "player", "audio_stream")]
 transform = Transform3D(20, 0, 0, 0, 20, 0, 0, 0, 20, 0.203564, -0.109128, 0.122446)
 script = ExtResource("1_lg4ib")
 loop = true
@@ -25,7 +26,7 @@ transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0)
 material_override = ExtResource("2_ycshh")
 cast_shadow = 0
 gi_mode = 0
-mesh = SubResource("SphereMesh_2ikhj")
+mesh = SubResource("SphereMesh_86pco")
 
 [node name="Player" type="AudioStreamPlayer" parent="."]
 stream = SubResource("AudioStreamGenerator_cr308")

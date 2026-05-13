@@ -2,6 +2,7 @@
 #include <queue>
 #include <mutex>
 #include "IDecoder.h"
+#include "../DecodeConfig.h"
 
 extern "C" {
 	#include "libavformat/avformat.h"
@@ -9,6 +10,9 @@ extern "C" {
 	#include "libswresample/swresample.h"
 	#include "libswscale/swscale.h"
 	#include <libavutil/fifo.h>
+	#include <libavfilter/buffersink.h>
+	#include <libavfilter/buffersrc.h>
+	#include <libavfilter/avfilter.h>
 }
 
 ///
@@ -34,7 +38,11 @@ public:
 	void setVideoEnable(bool isEnable);
 	void setAudioEnable(bool isEnable);
 	void setAudioAllChDataEnable(bool isEnable);
-	double getVideoFrame(void** frameData, int32_t&  width, int32_t&  height);
+
+#ifdef DECODER_HW
+	double getVideoFrame(AVBufferRef* hw_device_ctx, int32_t&  width, int32_t&  height, bool& sw);
+#endif
+	double getVideoFrame(void** frameData, int32_t&  width, int32_t&  height, bool& sw);
 	double getAudioFrame(unsigned char** outputFrame, int32_t&  frameSize, int32_t&  nb_channel, size_t& byte_per_sample);
 	double getNextVideoFrameTime();
 	double getNextAudioFrameTime();
@@ -43,6 +51,9 @@ public:
 	void freePreloadFrame();
 	void freeBufferFrame();
 	void print_stream_maps();
+#ifdef DECODER_HW
+	int32_t init_gpu_filter(int width, int height, enum AVPixelFormat hw_pix_fmt);
+#endif
 
 	int32_t getMetaData(char**& key, char**& value);
 	int32_t getStreamCount();
@@ -55,7 +66,10 @@ public:
 	 */
 	int32_t getStreamType(int32_t index);
 
-
+#ifdef DECODER_HW
+	AVBufferRef* hw_device_ctx = nullptr;
+	enum AVPixelFormat hw_pix_fmt = AV_PIX_FMT_NONE;
+#endif
 private:
 	bool mIsInitialized;
 	bool mIsAudioAllChEnabled;
@@ -73,11 +87,19 @@ private:
 	AVCodecContext*	mVideoCodecContext;
 	AVCodecContext*	mAudioCodecContext;
 	AVCodecContext*	mSubtitleCodecContext{};
+#ifdef DECODER_HW
+	AVFilterGraph* filter_graph;
+	AVFilterContext* buffersink_ctx;
+	AVFilterContext* buffersrc_ctx;
+#endif
 
 	AVPacket*	mPacket;
 	std::queue<AVFrame*> mVideoFrames;
 	std::queue<AVFrame*> mAudioFrames;
 	std::queue<AVFrame*> mSubtitleFrames;
+	std::vector<int> videoIndex = std::vector<int>();
+	std::vector<int> audioIndex = std::vector<int>();
+	std::vector<int> subtitleIndex = std::vector<int>();
 	uint32_t mVideoBuffMax;
 	uint32_t mAudioBuffMax;
 	uint32_t mSubtitleBuffMax;
@@ -90,11 +112,15 @@ private:
 	uint32_t mSubtitlePreloadMax;
 
 	SwrContext*	mSwrContext;
+	SwsContext* mSwsContext;
+	int32_t mSwsWidth, mSwsHeight;
+	AVPixelFormat mSwsSrcFormat;
 	int32_t initSwrContext();
 
-	VideoInfo	mVideoInfo{};
-	AudioInfo	mAudioInfo{};
-	SubtitleInfo	mSubtitleInfo{};
+	VideoInfo mVideoInfo{};
+	AudioInfo mAudioInfo{};
+	SubtitleInfo mSubtitleInfo{};
+	BenchmarkInfo mBenchmarkInfo{};
 	void updateBufferState();
 
 	int32_t mFrameBufferNum;

@@ -1,9 +1,13 @@
 #pragma once
+#include <vector>
 #include <thread>
 #include <mutex>
 #include <memory>
 #include "IDecoder.h"
 
+///
+/// Handle the video player
+///
 class AVDecoderHandler {
 public:
 	AVDecoderHandler();
@@ -31,7 +35,7 @@ public:
 
 	void setSeekTime(float sec);
 	
-	double getVideoFrame(void** frameData, int32_t& width, int32_t& height);
+	double getVideoFrame(void** frameData, int32_t& width, int32_t& height, bool& sw);
 	double getNextVideoFrameTime();
 	double getAudioFrame(uint8_t** outputFrame, int32_t& frameSize, int32_t& nb_channel, size_t& byte_per_sample);
 	double getNextAudioFrameTime();
@@ -50,6 +54,7 @@ public:
 	bool isVideoBufferEmpty();
 	bool isAudioBufferEmpty();
 	bool isVideoBufferFull();
+	std::vector<double> getBenchmark();
 
 	int32_t getMetaData(char**& key, char**& value) const;
 

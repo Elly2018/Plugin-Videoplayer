@@ -11,16 +11,22 @@ extern "C" {
 // Utils
 //
 //
-void nativeCleanAll();
+///
+/// Remove all decoder, even if the decoder is in work
+///
+void nativeCleanAllDecoders();
+///
+/// Remove all destroyed decoder
+///
 void nativeCleanDestroyedDecoders();
 //
 //
 //	Decoder
 //
 //
-/*
-  Create a decoder instance, and push it to the decoder list
-*/
+///
+/// Create a decoder instance, and push it to the decoder list
+///
 int32_t nativeCreateDecoder(const char* filePath, int32_t& id);
 int32_t nativeCreateDecoderAsync(const char* filePath, int32_t& id);
 int32_t nativeGetDecoderState(int32_t id);
@@ -32,7 +38,7 @@ void nativeScheduleDestroyDecoder(int32_t id);
 void nativeDestroyDecoder(int32_t id);
 bool nativeGetOtherStreamIndex(int32_t id, int32_t type, int32_t& li, int32_t& count, int32_t& current);
 bool nativeIsEOF(int32_t id);
-double nativeGrabVideoFrame(int32_t id, void** frameData, bool& frameReady, int32_t& width, int32_t& height);
+double nativeGrabVideoFrame(int32_t id, void** frameData, bool& sw, bool& frameReady, int32_t& width, int32_t& height);
 void nativeReleaseVideoFrame(int32_t id);
 //
 //
@@ -73,4 +79,7 @@ bool nativeIsSeekOver(int32_t id);
 //
 int32_t nativeGetClock(int32_t id);
 int32_t nativeGetMetaData(const char* filePath, char*** key, char*** value);
+double nativeGetTotalDecoderTime(int32_t id);
+double nativeGetSWSTime(int32_t id);
+double nativeGetReceivedTime(int32_t id);
 }

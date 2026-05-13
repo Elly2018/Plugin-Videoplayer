@@ -52,7 +52,7 @@ bool AVDecoderHandler::isPreloadRunning() const {
 	return mBufferThreadRunning;
 }
 
-double AVDecoderHandler::getVideoFrame(void** frameData, int32_t& width, int32_t& height) {
+double AVDecoderHandler::getVideoFrame(void** frameData, int32_t& width, int32_t& height, bool& sw) {
 	bool decoder_null = mIDecoder == nullptr;
 	bool decoder_disable = !mIDecoder->getVideoInfo().isEnabled;
 	bool decoder_seek = mDecoderState == SEEK;
@@ -65,7 +65,7 @@ double AVDecoderHandler::getVideoFrame(void** frameData, int32_t& width, int32_t
 		return -1;
 	}
 
-	return mIDecoder->getVideoFrame(frameData, width, height);
+	return mIDecoder->getVideoFrame(frameData, width, height, sw);
 }
 
 double AVDecoderHandler::getNextVideoFrameTime() {
@@ -123,24 +123,21 @@ bool AVDecoderHandler::getOtherIndex(MediaType type, int32_t& li, int32_t& count
 			IDecoder::VideoInfo info = getVideoInfo();
 			count = info.otherIndexCount;
 			current = info.currentIndex;
-			//memcpy(li, info.otherIndex, count * sizeof(int));
-			mempcpy(&li, info.otherIndex, sizeof(int32_t));
+			li = (info.otherIndex != nullptr && count > 0) ? info.otherIndex[0] : -1;
 		} return true;
 	case AVDecoderHandler::AUDIO:
 		{
 			IDecoder::AudioInfo info = getAudioInfo();
 			count = info.otherIndexCount;
 			current = info.currentIndex;
-			//memcpy(li, info.otherIndex, count * sizeof(int));
-			mempcpy(&li, info.otherIndex, sizeof(int32_t));
+			li = (info.otherIndex != nullptr && count > 0) ? info.otherIndex[0] : -1;
 		} return true;
 	case AVDecoderHandler::SUBTITLE:
 		{
 			IDecoder::SubtitleInfo info = getSubtitleInfo();
 			count = info.otherIndexCount;
 			current = info.currentIndex;
-			//memcpy(li, info.otherIndex, count * sizeof(int));
-			mempcpy(&li, info.otherIndex, sizeof(int32_t));
+			li = (info.otherIndex != nullptr && count > 0) ? info.otherIndex[0] : -1;
 		} return true;
 	}
 
@@ -279,6 +276,10 @@ bool AVDecoderHandler::isVideoBufferFull() {
 	IDecoder::VideoInfo videoInfo = mIDecoder->getVideoInfo();
 	IDecoder::BufferState _FULL = IDecoder::BufferState::FULL;
 	return videoInfo.isEnabled && videoInfo.bufferState == _FULL;
+}
+
+std::vector<double> AVDecoderHandler::getBenchmark() {
+	std::vector<double> a = std::vector<double>();
 }
 
 int32_t AVDecoderHandler::getMetaData(char**& key, char**& value) const {

@@ -2,6 +2,16 @@
 #include <cstddef>
 #include <cinttypes>
 
+///
+/// We want the information of current render engine provide,
+/// THis affect the ability of the bottom deocder behaviours.
+///
+struct EngineContext {
+public:
+	EngineContext() {}	
+	virtual ~EngineContext() {}
+};
+
 class IDecoder
 {
 public:
@@ -23,6 +33,7 @@ public:
 		int32_t width;
 		int32_t height;
 		float framerate;
+		bool sw;
 	};
 
 	struct AudioInfo : public BaseInfo {
@@ -32,6 +43,12 @@ public:
 
 	struct SubtitleInfo : public BaseInfo {
 		bool isEnabled;
+	};
+
+	struct BenchmarkInfo {
+		double decoderTime = 0.0;
+		double swsTime = 0.0;
+		double receivedTime = 0.0;
 	};
 	
 	virtual bool init(const char* filePath) = 0;
@@ -47,7 +64,7 @@ public:
 	virtual void setVideoEnable(bool isEnable) = 0;
 	virtual void setAudioEnable(bool isEnable) = 0;
 	virtual void setAudioAllChDataEnable(bool isEnable) = 0;
-	virtual double getVideoFrame(void** frameData, int& width, int& height) = 0;
+	virtual double getVideoFrame(void** frameData, int& width, int& height, bool& sw) = 0;
 	virtual double getNextVideoFrameTime() = 0;
 	virtual double getAudioFrame(unsigned char** outputFrame, int& frameSize, int& nb_channel, size_t& byte_per_sample) = 0;
 	virtual double getNextAudioFrameTime() = 0;

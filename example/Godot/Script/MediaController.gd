@@ -8,13 +8,23 @@ signal ToLoad(p:String)
 signal ToAudio(p:float)
 signal SeekForward(m:float)
 signal SeekBackward(m:float)
+signal Seek(m:float)
 
 @export var input_uri: TextEdit
+@export var slider:HSlider
+@export var time_display:Label
 @export var Con: Control
 @export var seek_time: float
 
 var _ctrl = false;
 var _shift = false;
+
+func get_time_format(v:float) -> String:
+	var seconds:int = int(v);
+	var hours = seconds / 3600;
+	var minutes = (seconds % 3600) / 60;
+	var secs = seconds % 60;
+	return "%02d:%02d:%02d" % [hours, minutes, secs];
 
 func _input(event):
 	if event is InputEventKey:
@@ -46,3 +56,10 @@ func OnAudio(v:float):
 
 func MenuTrigger():
 	Con.visible = !Con.visible;
+
+func OnSeek(v:float):
+	emit_signal("Seek", v);
+
+func UpdateTimer(current:float, max:float):
+	time_display.text = get_time_format(current) + "/" + get_time_format(max);
+	slider.set_value_no_signal(current / max);

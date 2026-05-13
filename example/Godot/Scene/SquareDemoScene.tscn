@@ -1,0 +1,24 @@
+[gd_scene load_steps=7 format=3 uid="uid://bdiom4wbi322q"]
+
+[ext_resource type="Script" path="res://Script/PlayerManager.gd" id="1_afa6n"]
+[ext_resource type="Environment" uid="uid://co4hk2iqv5oxv" path="res://Environment/DemoScene.tres" id="2_y5ub8"]
+[ext_resource type="PackedScene" uid="uid://nepgy2yvue6r" path="res://Prefab/XRPlayer.tscn" id="3_d7fgi"]
+[ext_resource type="PackedScene" uid="uid://cwv823pnlsrpd" path="res://Prefab/square.tscn" id="4_ix5g6"]
+[ext_resource type="PackedScene" uid="uid://ciy3ke0sxpite" path="res://Prefab/XRPlayUI.tscn" id="5_y7jsw"]
+
+[sub_resource type="CameraAttributesPractical" id="CameraAttributesPractical_3w5hy"]
+
+[node name="Scene" type="Node3D"]
+script = ExtResource("1_afa6n")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("2_y5ub8")
+camera_attributes = SubResource("CameraAttributesPractical_3w5hy")
+
+[node name="Player" parent="." instance=ExtResource("3_d7fgi")]
+
+[node name="Square" parent="." instance=ExtResource("4_ix5g6")]
+play_on_start = true
+uri = "Resource/sbs.mp4"
+
+[node name="XRPlayUI" parent="." instance=ExtResource("5_y7jsw")]

@@ -3,46 +3,36 @@
 #include <string>
 #include <thread>
 #include <future>
-#include "../DecodeConfig.h"
+#include <functional>
 #include "../gd/Logger.h"
 
 extern "C" {
 	#include <libavutil/imgutils.h>
 	#include <libavutil/hwcontext.h>
+	#include <libavutil/opt.h>
 }
-
-#ifdef UNITY
-//#define COLORPIX AV_PIX_FMT_YUV420P
-#define COLORPIX AV_PIX_FMT_RGB24
-#else
-#define COLORPIX AV_PIX_FMT_RGB24
-#endif
 
 #ifdef DECODER_HW
-static AVBufferRef* hw_device_ctx = NULL;
-static enum AVPixelFormat hw_pix_fmt;
-
-static int hw_decoder_init(AVCodecContext* ctx, const enum AVHWDeviceType type)
-{
-	int err = 0;
-	if ((err = av_hwdevice_ctx_create(&hw_device_ctx, type,
-		NULL, NULL, 0)) < 0) {
-		LOG_ERROR("Failed to create specified HW device.");
-		return err;
-	}
-	ctx->hw_device_ctx = av_buffer_ref(hw_device_ctx);
-	return err;
+static int32_t hw_decoder_init(AVCodecContext *ctx, const enum AVHWDeviceType type) {
+    int32_t err = 0;
+	DecoderFFmpeg* instance = static_cast<DecoderFFmpeg*>(ctx->opaque);
+    if ((err = av_hwdevice_ctx_create(&instance->hw_device_ctx, type, NULL, NULL, 0)) < 0) {
+        LOG_ERROR("Failed to create specified HW device");
+        return err;
+    }
+    ctx->hw_device_ctx = av_buffer_ref(instance->hw_device_ctx);
+    return err;
 }
 
-static AVPixelFormat get_hw_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts)
-{
-	const enum AVPixelFormat* p;
-	for (p = pix_fmts; *p != -1; p++) {
-		if (*p == hw_pix_fmt)
-			return *p;
-	}
-	LOG_ERROR("Failed to get HW surface format.");
-	return AV_PIX_FMT_NONE;
+static enum AVPixelFormat get_hw_format(AVCodecContext *ctx, const enum AVPixelFormat *pix_fmts) {
+    const enum AVPixelFormat *p;
+	DecoderFFmpeg* instance = static_cast<DecoderFFmpeg*>(ctx->opaque);
+    for (p = pix_fmts; *p != -1; p++) {
+        if (*p == instance->hw_pix_fmt)
+            return *p;
+    }
+    LOG_ERROR("Failed to get HW surface format.");
+    return AV_PIX_FMT_NONE;
 }
 
 #endif
@@ -75,6 +65,10 @@ DecoderFFmpeg::DecoderFFmpeg() {
 	mIsAudioAllChEnabled = false;
 	mUseTCP = false;
 	mIsSeekToAny = false;
+
+	mSwsContext = nullptr;
+	mSwsWidth = mSwsHeight = 0;
+	mSwsSrcFormat = AV_PIX_FMT_NONE;
 }
 
 DecoderFFmpeg::~DecoderFFmpeg() {
@@ -149,6 +143,7 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 	double ctxDuration = (double)(mAVFormatContext->duration) / AV_TIME_BASE;
 #ifdef DECODER_HW
 	type = av_hwdevice_iterate_types(type);
+	LOG("[DecoderFFmpeg] HW device type: ", av_hwdevice_get_type_name(type));
 #endif
 
 	for (int32_t i = 0; i < mAVFormatContext->nb_streams; i++) {
@@ -177,37 +172,83 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 
 	/* Video initialization */
 	LOG("[DecoderFFmpeg] Video initialization  ");
-	st_index[AVMEDIA_TYPE_VIDEO] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_VIDEO, st_index[AVMEDIA_TYPE_VIDEO], -1, NULL, 0);
+	st_index[AVMEDIA_TYPE_VIDEO] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_VIDEO, st_index[AVMEDIA_TYPE_VIDEO], -1, &mVideoCodec, 0);
 
 	LOG("[DecoderFFmpeg] Audio initialization ");
-	st_index[AVMEDIA_TYPE_AUDIO] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_AUDIO, st_index[AVMEDIA_TYPE_AUDIO], st_index[AVMEDIA_TYPE_VIDEO], NULL, 0);
+	st_index[AVMEDIA_TYPE_AUDIO] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_AUDIO, st_index[AVMEDIA_TYPE_AUDIO], st_index[AVMEDIA_TYPE_VIDEO], &mAudioCodec, 0);
 
 	LOG("[DecoderFFmpeg] Subtitle initialization ");
-	st_index[AVMEDIA_TYPE_SUBTITLE] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_SUBTITLE, (st_index[AVMEDIA_TYPE_AUDIO] >= 0 ? st_index[AVMEDIA_TYPE_AUDIO] : st_index[AVMEDIA_TYPE_VIDEO]), st_index[AVMEDIA_TYPE_VIDEO], NULL, 0);
+	st_index[AVMEDIA_TYPE_SUBTITLE] = av_find_best_stream(mAVFormatContext, AVMEDIA_TYPE_SUBTITLE, (st_index[AVMEDIA_TYPE_AUDIO] >= 0 ? st_index[AVMEDIA_TYPE_AUDIO] : st_index[AVMEDIA_TYPE_VIDEO]), st_index[AVMEDIA_TYPE_VIDEO], &mSubtitleCodec, 0);
 
+#ifdef DECODER_HW
+	hw_pix_fmt = AV_PIX_FMT_NONE;  // default: no HW
+    for (int32_t i = 0;; i++) {
+        const AVCodecHWConfig *config = avcodec_get_hw_config(mVideoCodec, i);
+        if (!config) {
+            // This codec has no HW support — that's fine, use SW
+            LOG("[DecoderFFmpeg] No HW config for: ", mVideoCodec->name, ", falling back to SW");
+            break;
+        }
+        if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
+            config->device_type == type) {
+            hw_pix_fmt = config->pix_fmt;
+			LOG("[DecoderFFmpeg] hw_pix_fmt: ", (int32_t)hw_pix_fmt);
+            break;
+        }
+    }
+#endif
+
+	bool v_hw = false;
 	if (st_index[AVMEDIA_TYPE_VIDEO] < 0) {
 		LOG("[DecoderFFmpeg] video stream not found. ", st_index[AVMEDIA_TYPE_VIDEO]);
 		mVideoInfo.isEnabled = false;
 	} else {
+		LOG("[DecoderFFmpeg] video stream found. ", st_index[AVMEDIA_TYPE_VIDEO]);
 		mVideoInfo.isEnabled = true;
 		mVideoStream = mAVFormatContext->streams[st_index[AVMEDIA_TYPE_VIDEO]];
-        mVideoCodecContext = avcodec_alloc_context3(NULL);
-		if (!mVideoCodecContext) return false;
-        mVideoCodecContext->refs = 1;
-        int32_t ret = avcodec_parameters_to_context(mVideoCodecContext, mVideoStream->codecpar);
 #ifdef DECODER_HW
-		if (type != AV_HWDEVICE_TYPE_NONE) {
-
+		// Only set up HW pipeline if a matching format was found
+		if (hw_pix_fmt != AV_PIX_FMT_NONE) {
+			mVideoCodecContext = avcodec_alloc_context3(mVideoCodec);
+			mVideoCodecContext->opaque = this;
 			mVideoCodecContext->get_format = get_hw_format;
-			hw_decoder_init(mVideoCodecContext, type);
-			LOG("[DecoderFFmpeg] hwaccel: ", type);
+			mVideoCodecContext->refs = 1;
+			if (hw_decoder_init(mVideoCodecContext, type) >= 0) {
+				int32_t ret = avcodec_parameters_to_context(mVideoCodecContext, mVideoStream->codecpar);
+				if (mVideoCodec == nullptr) {
+					LOG_ERROR_VERBOSE("Video codec not available.");
+					goto v_hw_done;
+				}
+				mVideoCodec = avcodec_find_decoder(mVideoCodecContext->codec_id);
+				if (mVideoCodec == nullptr) {
+					LOG_ERROR_VERBOSE("Video codec not available.");
+					goto v_hw_done;
+				}
+				v_hw = true;
+			}else{
+				hw_pix_fmt = AV_PIX_FMT_NONE;
+				LOG_ERROR("[DecoderFFmpeg] HW device init failed — falling back to SW decode");
+			}
 		}
 #endif
-		LOG("[DecoderFFmpeg] Video codec id: ", mVideoCodecContext->codec_id);
-		mVideoCodec = avcodec_find_decoder(mVideoCodecContext->codec_id);
-		if (mVideoCodec == nullptr) {
-			LOG("Video codec not available.");
-			return false;
+v_hw_done:
+		if(!v_hw){
+			LOG_VERBOSE("[DecoderFFmpeg] Attempt to use video software decoder");
+			hw_pix_fmt = AV_PIX_FMT_RGB24;
+			mVideoCodecContext = avcodec_alloc_context3(NULL);
+			if (!mVideoCodecContext) return false;
+			mVideoCodecContext->refs = 1;
+			int32_t ret = avcodec_parameters_to_context(mVideoCodecContext, mVideoStream->codecpar);
+			LOG("[DecoderFFmpeg] Video codec id: ", mVideoCodecContext->codec_id);
+			if (mVideoCodec == nullptr) {
+				LOG_ERROR("Video codec not available.");
+				return false;
+			}
+			mVideoCodec = avcodec_find_decoder(mVideoCodecContext->codec_id);
+			if (mVideoCodec == nullptr) {
+				LOG_ERROR("Video codec not available.");
+				return false;
+			}
 		}
 		AVDictionary *autoThread = nullptr;
 		av_dict_set(&autoThread, "threads", "auto", 0);
@@ -215,6 +256,7 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		mVideoCodecContext->flags2 |= AV_CODEC_FLAG2_FAST;
 		errorCode = avcodec_open2(mVideoCodecContext, mVideoCodec, &autoThread);
 		av_dict_free(&autoThread);
+
 		if (errorCode < 0) {
 			LOG("[DecoderFFmpeg] Could not open video codec: ", errorCode);
 			printErrorMsg(errorCode);
@@ -233,21 +275,6 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		//mVideoFrames.swap(decltype(mVideoFrames)());
 	}
 
-#ifdef DECODER_HW
-	for (int i = 0;; i++) {
-		const AVCodecHWConfig* config = avcodec_get_hw_config(mVideoCodec, i);
-		if (!config) {
-			LOG_ERROR("[DecoderFFmpeg | ERROR] Decoder ", mVideoCodec->name, " does not support device type, ", av_hwdevice_get_type_name(type));
-			hw_pix_fmt = AV_PIX_FMT_NONE;
-		}
-		if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX &&
-			config->device_type == type) {
-			hw_pix_fmt = config->pix_fmt;
-			break;
-		}
-	}
-#endif
-
 	/* Audio initialization */
 	if (st_index[AVMEDIA_TYPE_AUDIO] < 0) {
 		LOG("[DecoderFFmpeg] audio stream not found. ", st_index[AVMEDIA_TYPE_AUDIO]);
@@ -255,11 +282,10 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 	} else {
 		mAudioInfo.isEnabled = true;
 		mAudioStream = mAVFormatContext->streams[st_index[AVMEDIA_TYPE_AUDIO]];
-		mAudioCodecContext = avcodec_alloc_context3(NULL);
+		mAudioCodecContext = avcodec_alloc_context3(mAudioCodec);
         avcodec_parameters_to_context(mAudioCodecContext, mAudioStream->codecpar);
 		LOG("[DecoderFFmpeg] Audio codec id: ", mAudioCodecContext->codec_id);
 		mAudioCodecContext->pkt_timebase = mAudioStream->time_base;
-        mAudioCodec = avcodec_find_decoder(mAudioCodecContext->codec_id);
 		if (mAudioCodec == nullptr) {
 			LOG("[DecoderFFmpeg] Audio codec not available. ");
 			return false;
@@ -288,16 +314,16 @@ bool DecoderFFmpeg::init(const char* format, const char* filePath) {
 		mAudioInfo.currentIndex = st_index[AVMEDIA_TYPE_AUDIO];
 	}
 
-	std::vector<int> videoIndex = std::vector<int>();
-	std::vector<int> audioIndex = std::vector<int>();
-	std::vector<int> subtitleIndex = std::vector<int>();
+	videoIndex = std::vector<int>();
+	audioIndex = std::vector<int>();
+	subtitleIndex = std::vector<int>();
 	getListType(mAVFormatContext, videoIndex, audioIndex, subtitleIndex);
 	mVideoInfo.otherIndex = videoIndex.data();
-	mVideoInfo.otherIndexCount = videoIndex.size();
+	mVideoInfo.otherIndexCount = (int32_t)videoIndex.size();
 	mAudioInfo.otherIndex = audioIndex.data();
-	mAudioInfo.otherIndexCount = audioIndex.size();
+	mAudioInfo.otherIndexCount = (int32_t)audioIndex.size();
 	mSubtitleInfo.otherIndex = subtitleIndex.data();
-	mSubtitleInfo.otherIndexCount = subtitleIndex.size();
+	mSubtitleInfo.otherIndexCount = (int32_t)subtitleIndex.size();
 
 	LOG("[DecoderFFmpeg] Finished initialization");
 	mIsInitialized = true;
@@ -441,7 +467,13 @@ int DecoderFFmpeg::initSwrContext() {
 	return errorCode;
 }
 
-double DecoderFFmpeg::getVideoFrame(void** frameData, int32_t& width, int32_t& height) {
+#ifdef DECODER_HW
+double DecoderFFmpeg::getVideoFrame(AVBufferRef* hw_device_ctx, int32_t&  width, int32_t&  height, bool& sw){
+
+}
+#endif
+
+double DecoderFFmpeg::getVideoFrame(void** frameData, int32_t& width, int32_t& height, bool& sw) {
 	std::lock_guard<std::mutex> lock(mVideoMutex);
 	if (!mIsInitialized || mVideoFrames.size() == 0) {
 		LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Video frame not available. ");
@@ -453,6 +485,13 @@ double DecoderFFmpeg::getVideoFrame(void** frameData, int32_t& width, int32_t& h
 	*frameData = frame->data[0];
 	width = frame->width;
 	height = frame->height;
+	AVPixelFormat fmt = (AVPixelFormat)frame->format;
+	
+#ifdef DECODER_HW
+	sw = (fmt == AV_PIX_FMT_RGB24 || fmt == AV_PIX_FMT_NONE);
+#else
+	sw = true;
+#endif
 
 	int64_t timeStamp = frame->pts;
 	double timeInSec = av_q2d(mVideoStream->time_base) * timeStamp;
@@ -598,6 +637,11 @@ void DecoderFFmpeg::destroy() {
 		swr_free(&mSwrContext);
 		mSwrContext = nullptr;
 	}
+
+	if (mSwsContext) { 
+		sws_freeContext(mSwsContext); 
+		mSwsContext = nullptr;
+	 }
 	
 	flushBuffer(&mVideoFrames, &mVideoMutex);
 	flushBuffer(&mAudioFrames, &mAudioMutex);
@@ -617,6 +661,7 @@ void DecoderFFmpeg::destroy() {
 	memset(&mVideoInfo, 0, sizeof(VideoInfo));
 	memset(&mAudioInfo, 0, sizeof(AudioInfo));
 	memset(&mSubtitleInfo, 0, sizeof(SubtitleInfo));
+	memset(&mBenchmarkInfo, 0, sizeof(BenchmarkInfo));
 	
 	mIsInitialized = false;
 	mIsAudioAllChEnabled = false;
@@ -656,14 +701,14 @@ void DecoderFFmpeg::preloadVideoFrame()
 {
 	int32_t ret = avcodec_send_packet(mVideoCodecContext, mPacket);
 	if (ret != 0) {
-		LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Video frame update failed: avcodec_send_packet ", ret);
+		LOG_ERROR_VERBOSE("[DecoderFFmpeg | VERBOSE] Video frame update failed: avcodec_send_packet ", ret);
 		return;
 	}
 	do {
 		AVFrame* srcFrame = av_frame_alloc();
 		ret = avcodec_receive_frame(mVideoCodecContext, srcFrame);
 		if (ret != 0) {
-			LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Video frame update failed: avcodec_receive_frame ", ret);
+			LOG_ERROR_VERBOSE("[DecoderFFmpeg | VERBOSE] Video frame update failed: avcodec_receive_frame ", ret);
 			if(ret == AVERROR(EAGAIN)){
 				LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] ", ret, ": AVERROR(EAGAIN)");
 			}
@@ -680,6 +725,12 @@ void DecoderFFmpeg::preloadVideoFrame()
 			AVFrame* destFrame = av_frame_alloc();
 			av_frame_copy_props(destFrame, srcFrame);
 			ret = av_hwframe_transfer_data(destFrame, srcFrame, 0);
+			if (ret < 0) {
+				LOG_ERROR("[DecoderFFmpeg | ERROR] av_hwframe_transfer_data error: ", ret);
+				av_frame_free(&destFrame);
+				av_frame_free(&srcFrame);
+				return;
+			}
 			destFrame->best_effort_timestamp = srcFrame->best_effort_timestamp;
 			destFrame->pts = srcFrame->pts;
 			destFrame->pkt_dts = srcFrame->pkt_dts;
@@ -690,8 +741,7 @@ void DecoderFFmpeg::preloadVideoFrame()
 			}
 			av_frame_free(&srcFrame);
 			mVideoFramesPreload.push(destFrame);
-		}
-		else {
+		} else {
 			mVideoFramesPreload.push(srcFrame);
 		}
 #else
@@ -704,14 +754,14 @@ void DecoderFFmpeg::preloadAudioFrame()
 {
 	int ret = avcodec_send_packet(mAudioCodecContext, mPacket);
 	if (ret != 0) {
-		LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Audio frame update failed: avcodec_send_packet ", ret);
+		LOG_ERROR_VERBOSE("[DecoderFFmpeg | VERBOSE] Audio frame update failed: avcodec_send_packet ", ret);
 		return;
 	}
 	do {
 		AVFrame* srcFrame = av_frame_alloc();
 		ret = avcodec_receive_frame(mAudioCodecContext, srcFrame);
 		if (ret != 0) {
-			LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Audio frame update failed: avcodec_receive_frame ", ret);
+			LOG_ERROR_VERBOSE("[DecoderFFmpeg | VERBOSE] Audio frame update failed: avcodec_receive_frame ", ret);
 			return;
 		}
 		mAudioFramesPreload.push(srcFrame);
@@ -732,54 +782,64 @@ void DecoderFFmpeg::updateVideoFrame() {
 	int width = srcFrame->width;
 	int height = srcFrame->height;
 
-	const AVPixelFormat dstFormat = COLORPIX;
+	AVPixelFormat dstFormat = AV_PIX_FMT_RGB24;
+#ifdef DECODER_HW
+	if(hw_pix_fmt != AV_PIX_FMT_NONE) {
+		dstFormat = hw_pix_fmt;
+	}
+#endif
 	LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Video format. w: ", width, ", h: ", height, ", f: ", dstFormat);
 	AVFrame* dstFrame = av_frame_alloc();
 	av_frame_copy_props(dstFrame, srcFrame);
-
-	dstFrame->format = dstFormat;
 	dstFrame->best_effort_timestamp = srcFrame->best_effort_timestamp;
 	dstFrame->pkt_dts = srcFrame->pkt_dts;
 	dstFrame->pts = srcFrame->best_effort_timestamp;
-	
-	//av_image_alloc(dstFrame->data, dstFrame->linesize, dstFrame->width, dstFrame->height, dstFormat, 0)
-	int numBytes = av_image_get_buffer_size(dstFormat, width, height, 1);
-	LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] Number of bytes: ", numBytes);
-	AVBufferRef* buffer = av_buffer_alloc(numBytes * sizeof(uint8_t));
-	//avpicture_fill((AVPicture *)dstFrame,buffer->data,dstFormat,width,height);
-	if (buffer == nullptr) {
-		LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] The video frame buffer is nullptr");
-		return;
+	dstFrame->format = dstFormat;
+	dstFrame->width  = width;
+	dstFrame->height = height;
+#ifdef DECODER_HW
+	av_hwframe_get_buffer(srcFrame->hw_frames_ctx, dstFrame, 0);
+	AVFrame* cpuFrame = av_frame_alloc();
+    cpuFrame->format = AV_PIX_FMT_RGB24;
+	av_hwframe_transfer_data(cpuFrame, srcFrame, 0);
+	std::lock_guard<std::mutex> lock(mVideoMutex);
+	mVideoFrames.push(cpuFrame);
+	av_frame_free(&dstFrame);
+#else
+	av_frame_get_buffer(dstFrame, 1);
+	if (mSwsContext == nullptr || 
+		mSwsWidth != width || 
+		mSwsHeight != height || 
+		mSwsSrcFormat != (AVPixelFormat)srcFrame->format) {
+		if (mSwsContext) sws_freeContext(mSwsContext);
+		mSwsContext = sws_getContext(
+			width, height, (AVPixelFormat)srcFrame->format,
+			width, height, dstFormat,
+			SWS_BILINEAR,
+			nullptr, nullptr, nullptr);
+		mSwsWidth = width;
+		mSwsHeight = height;
+		mSwsSrcFormat = (AVPixelFormat)srcFrame->format;
+		// Set correct input colorspace from frame metadata
+		int srcRange = (srcFrame->color_range == AVCOL_RANGE_JPEG) ? 1 : 0; // 1=full, 0=limited
+		int dstRange = 1; // RGB output is always full range
+		const int* srcTable = sws_getCoefficients(
+			srcFrame->colorspace == AVCOL_SPC_UNSPECIFIED ? SWS_CS_DEFAULT : srcFrame->colorspace);
+		const int* dstTable = sws_getCoefficients(SWS_CS_DEFAULT);
+		sws_setColorspaceDetails(mSwsContext, srcTable, srcRange, dstTable, dstRange, 0, 1<<16, 1<<16);
 	}
-
-	av_image_fill_arrays(dstFrame->data, dstFrame->linesize, buffer->data, dstFormat, width, height, 1);
-	dstFrame->buf[0] = buffer;
-
-	SwsContext* conversion = sws_getContext(width,
-		height,
-		(AVPixelFormat)srcFrame->format,
-		width,
-		height,
-		dstFormat,
-		SWS_POINT | SWS_FULL_CHR_H_INT | SWS_ACCURATE_RND,
-		nullptr,
-		nullptr,
-		nullptr);
 	
-	sws_scale(conversion, srcFrame->data, srcFrame->linesize, 0, height, dstFrame->data, dstFrame->linesize);
-	sws_freeContext(conversion);
+	sws_scale(mSwsContext, srcFrame->data, srcFrame->linesize, 0, height, dstFrame->data, dstFrame->linesize);
 	av_frame_copy_props(dstFrame, srcFrame);
 
 	dstFrame->format = dstFormat;
 	dstFrame->width = srcFrame->width;
 	dstFrame->height = srcFrame->height;
-
-	av_frame_free(&srcFrame);
-
-	LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] updateVideoFrame = ", (float)(clock() - start) / CLOCKS_PER_SEC);
-
 	std::lock_guard<std::mutex> lock(mVideoMutex);
 	mVideoFrames.push(dstFrame);
+#endif
+	av_frame_free(&srcFrame);
+	LOG_VERBOSE("[DecoderFFmpeg | VERBOSE] updateVideoFrame = ", (float)(clock() - start) / CLOCKS_PER_SEC);
 	updateBufferState();
 }
 
@@ -885,6 +945,48 @@ void DecoderFFmpeg::print_stream_maps()
 		LOG("    Codec_long_name: ", mAudioCodec->long_name);
 	}
 }
+
+#ifdef DECODER_HW
+int32_t DecoderFFmpeg::init_gpu_filter(int width, int height, enum AVPixelFormat hw_pix_fmt){
+	char args[512];
+    filter_graph = avfilter_graph_alloc();
+	const AVFilter* buffersrc = avfilter_get_by_name("buffer");
+	snprintf(args, sizeof(args),
+		"video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
+		width, height, hw_pix_fmt, 1, 1, 1, 1);
+	avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in", args, NULL, filter_graph);
+
+	const AVFilter* buffersink = avfilter_get_by_name("buffersink");
+    avfilter_graph_create_filter(&buffersink_ctx, buffersink, "out", NULL, NULL, filter_graph);
+
+	enum AVPixelFormat pix_fmts[] = { AV_PIX_FMT_RGB24, AV_PIX_FMT_NONE };
+    av_opt_set_int_list(buffersink_ctx, "pix_fmts", pix_fmts, AV_PIX_FMT_NONE, AV_OPT_SEARCH_CHILDREN);
+
+	const char* filter_descr = "scale_cuda=format=rgb24";
+
+	AVFilterInOut* outputs = avfilter_inout_alloc();
+    AVFilterInOut* inputs = avfilter_inout_alloc();
+
+	outputs->name = av_strdup("in");
+    outputs->filter_ctx = buffersrc_ctx;
+    outputs->pad_idx = 0;
+    outputs->next = NULL;
+
+    inputs->name = av_strdup("out");
+    inputs->filter_ctx = buffersink_ctx;
+    inputs->pad_idx = 0;
+    inputs->next = NULL;
+
+	avfilter_graph_parse_ptr(filter_graph, filter_descr, &inputs, &outputs, NULL);
+
+	for (int i = 0; i < filter_graph->nb_filters; i++) {
+        filter_graph->filters[i]->hw_device_ctx = av_buffer_ref(hw_device_ctx);
+    }
+
+    avfilter_graph_config(filter_graph, NULL);
+    return 0;
+}
+#endif
 
 void DecoderFFmpeg::freeFrontFrame(std::queue<AVFrame*>* frameBuff, std::mutex* mutex) {
 	std::lock_guard<std::mutex> lock(*mutex);
